@@ -1,5 +1,6 @@
 package com.example.demoworkflow.utils.workflow.pool;
 
+import com.alibaba.fastjson2.JSON;
 import com.example.demoworkflow.pojo.Config;
 import com.example.demoworkflow.utils.workflow.result.WorkflowResult;
 import com.example.demoworkflow.utils.workflow.states.NodeStates;
@@ -212,15 +213,15 @@ public class GlobalPool {
     public String parseConfig(String dst, String token){
         Map<Object, Object> pool = this.getAll(token);
         Set<String> variables = new HashSet<>();
-        Pattern pattern = Pattern.compile("\\{\\{(.*?)\\}\\}");
+        Pattern pattern = Pattern.compile("\\{\\{(.*?)}}");
         Matcher matcher = pattern.matcher(dst);
         while (matcher.find()) {
             variables.add(matcher.group(1));
         }
-        variables.forEach(item->{
-            if(pool.get(item) == null) return;
-            dst.replaceAll("\\{\\{"+item+"\\}\\}", (String) pool.get(item));
-        });
+        for(String item : variables){
+            if(pool.get(item) == null) continue;
+            dst = dst.replaceAll("\\{\\{"+item+ "}}", JSON.toJSONString(get(token, item)));
+        }
         return dst;
     }
 }

@@ -26,6 +26,7 @@ public class ConfigVO {
     public int max;
 
     @Min(value=1, message="不允许将浮点除数设置为小于1")
+    @Max(value=1000000, message="除数不允许超过1000000")
     // 如果该配置为数字且其有浮点区间限制，将该值作为除数得到相应的浮点值
     public int k = 1;
 

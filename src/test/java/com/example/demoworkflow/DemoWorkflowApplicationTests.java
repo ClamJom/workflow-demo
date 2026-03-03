@@ -413,4 +413,15 @@ class DemoWorkflowApplicationTests {
         """;
         workflowTest(workflowJSON);
     }
+
+    @Test
+    void mapConfigTest(){
+        Map<String, Object> map = new HashMap<>();
+        Map<String, String> subMap = new HashMap<>();
+        subMap.put("b", "test");
+        map.put("a", subMap);
+        globalPool.put("test", "test:mapConfig", map);
+        String ret = globalPool.parseConfig("{{test:mapConfig}}", "test");
+        assert ret.equals("{\"a\":{\"b\":\"test\"}}");
+    }
 }

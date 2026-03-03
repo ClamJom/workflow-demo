@@ -57,8 +57,10 @@ public class NodeImpl implements Node {
 
     private void parseNumber(Config config){
         int k = config.getK();
-        if(k == 1)
-            configs.put(config.getName(), config.getValue());
+        if(k == 1) {
+            configs.put(config.getName(), Integer.parseInt(config.getValue()));
+            return;
+        }
         int val = Integer.parseInt(config.getValue());
         int quantize = config.getQuantize();
         float rVal = (float) val / (float) k;
@@ -117,6 +119,32 @@ public class NodeImpl implements Node {
                     parseString(config);
             }
         });
+    }
+
+    /**
+     * 这个函数提供给节点本身使用的，用于向结果处理器返回节点生命周期中出现的错误并停止流程
+     * @param msg 消息
+     */
+    public void onNodeError(String msg){
+        WorkflowResult result = WorkflowResult.builder()
+                .token(token)
+                .nodeId(nodeId)
+                .state(NodeStates.ERROR)
+                .msg(msg)
+                .build();
+        globalPool.pushWorkflowResult(token, result);
+        globalPool.nodeError(token, nodeId);
+        globalPool.workflowError(token);
+    }
+
+    /**
+     * 这个函数是供节点本身设置失能的方法。若节点运行不满足条件，但不希望停止整个流程，需要将节点设置为失能。
+     * 注意！若某一分支完全依赖本节点运行（即没有其它节点指向该分支），该分支将在当前节点失能后也随之失能。
+     * 对于工作流中的分支，若其依赖的节点全部失能则当前分支失能。若当前分支有至少一个依赖节点成功运行且其它
+     * 依赖节点都处于失能态，则当前分支正常运行。
+     */
+    public void onNodeDisabled(){
+        globalPool.nodeDisabled(token, nodeId);
     }
 
     /**
