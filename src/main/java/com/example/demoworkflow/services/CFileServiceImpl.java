@@ -51,4 +51,13 @@ public class CFileServiceImpl implements CFileService{
                 .build();
         cFileRepository.save(cFile);
     }
+
+    @Override
+    public void updateCFileName(String workspace, String uuid, String newName) {
+        CFile cFile = getCFileByWorkspaceAndUuid(workspace, uuid);
+        if (cFile != null) {
+            cFile.setName(newName);
+            cFileRepository.save(cFile);
+        }
+    }
 }

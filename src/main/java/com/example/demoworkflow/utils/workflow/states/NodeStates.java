@@ -10,6 +10,6 @@ public class NodeStates {
     public static final int RUNNING = 0x002;
     /** 运行完毕 **/
     public static final int DONE = 0x100;
-    /** 失能，可能该节点所在的分支没有生效 **/
+    /** 失能，可能该节点所在的分支没有生效，参考基础节点置失能态函数（onNodeDisabled）中的解释 **/
     public static final int DISABLED = 0x200;
 }

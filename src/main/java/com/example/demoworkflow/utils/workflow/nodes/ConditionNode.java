@@ -93,7 +93,9 @@ public class ConditionNode extends NodeImpl{
         conditions.forEach(condition->{
             ConditionConfig cc = (ConditionConfig) configs.get(condition);
             Object a = globalPool.get(token, cc.a);
+            if(a == null) a = cc.a;
             Object b = globalPool.get(token, cc.b);
+            if(b == null) b = cc.b;
             if(!compareCore(cc.operator, a, b)){
                 if(cc.nextNodes == null) return;
                 /*
@@ -102,7 +104,7 @@ public class ConditionNode extends NodeImpl{
                 节点。
                 */
                 nextNodes.forEach(node->{
-                    if(cc.nextNodes.contains(node.nodeId)){
+                    if(cc.nextNodes.contains(node.nodeId) && node.getNodeType() != NodeType.END){
                         globalPool.nodeDisabled(token, node.nodeId);
                     }
                 });

@@ -1,9 +1,13 @@
 package com.example.demoworkflow.utils.workflow.nodes;
 
+import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
+import com.example.demoworkflow.vo.ConfigVO;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public enum NodeType {
@@ -14,6 +18,7 @@ public enum NodeType {
     HELLO("问候", 0x000003),
     CONDITION("条件", 0x000004),
     HTTP("网络请求", 0x000005),
+    LLM("大模型", 0x000006),
     ;
 
     @Getter
@@ -30,6 +35,7 @@ public enum NodeType {
         nodeClazzMap.put(HELLO.getCode(), HelloNode.class);
         nodeClazzMap.put(CONDITION.getCode(), ConditionNode.class);
         nodeClazzMap.put(HTTP.getCode(), HTTPRequestNode.class);
+        nodeClazzMap.put(LLM.getCode(), LLMNode.class);
     }
 
     NodeType(String name, int code){
@@ -60,6 +66,26 @@ public enum NodeType {
             return (NodeImpl) clazz.getDeclaredConstructor(GlobalPool.class, String.class).newInstance(globalPool, nodeId);
         }catch (Exception e){
             return null;
+        }
+    }
+
+    public static List<ConfigVO> getNodeDefaultConfigsByCode(int code){
+        try{
+            NodeImpl node = createNodeInstanceWithNodeIdByCode(code, null, null);
+            if(node == null) return new ArrayList<>();
+            return node.getNodeConfigs();
+        }catch (Exception e){
+            return new ArrayList<>();
+        }
+    }
+
+    public static List<OutputVariableDes> getNodeOutputsByCode(int code){
+        try{
+            NodeImpl node = createNodeInstanceWithNodeIdByCode(code, null, null);
+            if(node == null) return new ArrayList<>();
+            return node.getNodeOutputs();
+        }catch (Exception e){
+            return new ArrayList<>();
         }
     }
 }

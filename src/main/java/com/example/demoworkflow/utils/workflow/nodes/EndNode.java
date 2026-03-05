@@ -1,9 +1,10 @@
 package com.example.demoworkflow.utils.workflow.nodes;
 
+import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.utils.workflow.result.WorkflowResult;
 import com.example.demoworkflow.utils.workflow.states.NodeStates;
-import com.example.demoworkflow.utils.workflow.states.WorkflowStates;
+import com.example.demoworkflow.vo.ConfigVO;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +24,26 @@ public class EndNode extends NodeImpl{
     EndNode(GlobalPool globalPool, String nodeId) {
         super(globalPool, nodeId);
         this.setNodeType(NodeType.END);
+    }
+
+    @Override
+    public List<ConfigVO> getNodeConfigs(){
+        return List.of(ConfigVO.builder()
+                .name("output")
+                .type("Map")
+                .value("{}")
+                .des("输出变量")
+                .required(false)
+                .build());
+    }
+
+    @Override
+    public List<OutputVariableDes> getNodeOutputs() {
+        return List.of(OutputVariableDes.builder()
+                        .name("output")
+                        .type("Map")
+                        .des("输出")
+                .build());
     }
 
     @Override

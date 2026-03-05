@@ -1,8 +1,10 @@
 package com.example.demoworkflow.utils.workflow.nodes;
 
-import com.example.demoworkflow.utils.token.Token;
+import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
-import com.example.demoworkflow.utils.workflow.pool.NodePool;
+import com.example.demoworkflow.vo.ConfigVO;
+
+import java.util.List;
 
 /**
  * 起始节点
@@ -17,6 +19,26 @@ public class StartNode extends NodeImpl {
     StartNode(GlobalPool globalPool, String uuid){
         super(globalPool, uuid);
         this.setNodeType(NodeType.START);
+    }
+
+    @Override
+    public List<ConfigVO> getNodeConfigs(){
+        return List.of(ConfigVO.builder()
+                .name("input")
+                .type("Map")
+                .value("{}")
+                .des("输入变量")
+                .required(false)
+                .build());
+    }
+
+    @Override
+    public List<OutputVariableDes> getNodeOutputs() {
+        return List.of(OutputVariableDes.builder()
+                        .name("output")
+                        .type("Map")
+                        .des("输出")
+                .build());
     }
 
     @Override

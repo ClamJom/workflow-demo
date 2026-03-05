@@ -51,6 +51,32 @@ public class WorkflowHandler {
         nodeHandler.run(workflow.getStartNode());
     }
 
+    /**
+     * 异步执行工作流（不阻塞当前线程）
+     * 适用于SSE模式或不需要等待结果返回的场景
+     * @param workflow 工作流对象
+     */
+    @Async("workflow")
+    public void handlerAsync(Workflow workflow){
+        log.info("开始异步处理流程: {}", workflow.getToken());
+        // 一开始处理就需要将当前工作流的过期时间设置好，防止其长时间存在
+        globalPool.expire(workflow.getToken());
+        resultHandler.run(workflow);
+        // 初始化工作流状态
+        globalPool.initWorkflow(workflow.getToken());
+        globalPool.pushWorkflowResult(workflow.getToken(), WorkflowResult.builder()
+                .token(workflow.getToken())
+                .msg("开始执行流程图")
+                .state(WorkflowStates.STAND_BY)
+                .build());
+        globalPool.workflowRunning(workflow.getToken());
+        
+        // 启动节点处理器
+        nodeHandler.run(workflow.getStartNode());
+        
+        log.info("异步流程已启动, token: {}", workflow.getToken());
+    }
+
     public void stopWorkflow(String token){
         globalPool.workflowError(token);
         globalPool.pushWorkflowResult(token, WorkflowResult.builder()

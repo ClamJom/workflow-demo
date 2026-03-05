@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class WorkflowResult {
     public String token;
 
-    public String from = "system";
+    public String from;
 
     public String nodeId;
 
@@ -21,4 +21,8 @@ public class WorkflowResult {
     public String msg;
 
     public Object extData;
+
+    public String getFrom(){
+        return from == null ? "system" : from;
+    }
 }

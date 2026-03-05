@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class NodeVO {
@@ -19,4 +20,14 @@ public class NodeVO {
     public int type;
 
     public List<ConfigVO> configs;
+
+    /**
+     * 节点在画布上的位置，格式：{"x": 100, "y": 200}
+     */
+    public Map<String, Object> position;
+
+    /**
+     * 节点的显示标签
+     */
+    public String label;
 }

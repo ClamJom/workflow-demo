@@ -374,6 +374,21 @@ class DemoWorkflowApplicationTests {
               ]
             },
             {
+              "id": "test-node-4",
+              "name": "Hello",
+              "type": 3,
+              "configs":[
+                {
+                  "id": 3,
+                  "name": "message",
+                  "type": "String",
+                  "value": "Node4",
+                  "k": 1,
+                  "quantize": 0
+                }
+              ]
+            },
+            {
               "id": "test-end",
               "name": "End",
               "type": 2,
@@ -393,6 +408,10 @@ class DemoWorkflowApplicationTests {
               "to": "test-node-1"
             },
             {
+              "from": "test-start",
+              "to": "test-node-4"
+            },
+            {
               "from": "test-node-1",
               "to": "test-node-2"
             },
@@ -405,6 +424,10 @@ class DemoWorkflowApplicationTests {
               "to": "test-end"
             },
             {
+              "from": "test-node-4",
+              "to": "test-end"
+            },
+            {
               "from": "test-node-2",
               "to": "test-end"
             }
@@ -412,5 +435,16 @@ class DemoWorkflowApplicationTests {
         }
         """;
         workflowTest(workflowJSON);
+    }
+
+    @Test
+    void mapConfigTest(){
+        Map<String, Object> map = new HashMap<>();
+        Map<String, String> subMap = new HashMap<>();
+        subMap.put("b", "test");
+        map.put("a", subMap);
+        globalPool.put("test", "test:mapConfig", map);
+        String ret = globalPool.parseConfig("{{test:mapConfig}}", "test");
+        assert ret.equals("{\"a\":{\"b\":\"test\"}}");
     }
 }

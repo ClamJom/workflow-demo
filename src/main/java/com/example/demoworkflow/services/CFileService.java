@@ -17,4 +17,6 @@ public interface CFileService {
     List<CFile> getAllCFiles();
 
     CFile getCFileByWorkspaceAndUuid(String workspace, String uuid);
+
+    void updateCFileName(String workspace, String uuid, String newName);
 }

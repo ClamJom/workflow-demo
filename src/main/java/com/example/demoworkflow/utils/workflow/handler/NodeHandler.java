@@ -117,16 +117,16 @@ public class NodeHandler {
     /**
      * 处理节点运行出错时的逻辑
      * @param node  节点
-     * @param e 错误信息
+     * @param errorMsg 错误信息
      */
-    private void nodeError(NodeImpl node, Exception e){
-        putNodeState(node, NodeStates.ERROR, e.getMessage());
+    private void nodeError(NodeImpl node, String errorMsg){
+        putNodeState(node, NodeStates.ERROR, errorMsg);
         globalPool.nodeError(node.token, node.nodeId);
         globalPool.pushWorkflowResult(node.token,
                 WorkflowResult.builder()
                         .token(node.token)
                         .state(WorkflowStates.ERROR)
-                        .msg(e.getMessage())
+                        .msg(errorMsg)
                         .build());
         globalPool.workflowError(node.token);
     }
@@ -138,7 +138,8 @@ public class NodeHandler {
             nodeRun(node);
             nodeAfter(node);
         }catch(Exception e){
-            nodeError(node, e);
+            String errorMsg = e.getMessage();
+            nodeError(node, errorMsg);
         }
     }
 }

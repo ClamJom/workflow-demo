@@ -20,6 +20,9 @@ public class ResultHandler {
     @Resource
     private GlobalPool globalPool;
 
+    @Resource
+    private SseResultHandler sseResultHandler;
+
     private boolean isNodesEnded(Workflow workflow){
         if(workflow.getNodes().isEmpty()) return true;
         return workflow.getNodes().stream().allMatch(node->
@@ -33,6 +36,19 @@ public class ResultHandler {
         globalPool.initResultHandler(workflow.getToken());
         try {
             handler(workflow, rsp);
+        }catch(Exception e){
+            // 结果处理线程出错前端不可见，无需操作结果队列
+            log.error("运行流程结果处理线程出错", e);
+            globalPool.resultHandlerError(workflow.getToken());
+            globalPool.workflowError(workflow.getToken());
+        }
+    }
+
+    @Async("workflow")
+    public void run(Workflow workflow){
+        globalPool.initResultHandler(workflow.getToken());
+        try {
+            handler(workflow);
         }catch(Exception e){
             // 结果处理线程出错前端不可见，无需操作结果队列
             log.error("运行流程结果处理线程出错", e);
@@ -78,6 +94,36 @@ public class ResultHandler {
         }
         // 没有意义。实际上写入后马上就会被删除，此处保留
         globalPool.resultHandlerDone(workflow.getToken());
+        // 最后清理变量池
+        globalPool.deleteAll(token);
+    }
+
+    private void handler(Workflow workflow) {
+        globalPool.resultHandlerRunning(workflow.getToken());
+        String token = workflow.getToken();
+        while(true){
+            WorkflowResult result = globalPool.pollWorkflowResult(token);
+            if(workflow.isEnded() && result == null
+            ){
+                globalPool.pushWorkflowResult(token, WorkflowResult.builder()
+                        .token(token)
+                        .msg("流程运行完毕")
+                        .state(WorkflowStates.DONE)
+                        .build());
+                break;
+            }
+            if(result == null) continue;
+            sseResultHandler.sendResult(workflow.getToken(), result);
+        }
+        while(true){
+            // 对剩余的Result进行清理
+            WorkflowResult result = globalPool.pollWorkflowResult(token);
+            if(result == null) break;
+            sseResultHandler.sendResult(workflow.getToken(), result);
+        }
+        // 没有意义。实际上写入后马上就会被删除，此处保留
+        globalPool.resultHandlerDone(workflow.getToken());
+        sseResultHandler.closeAllSseEmitters(workflow.getToken());
         // 最后清理变量池
         globalPool.deleteAll(token);
     }
