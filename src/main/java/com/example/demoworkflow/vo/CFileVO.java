@@ -10,5 +10,7 @@ public class CFileVO {
 
     public String name;
 
+    public String uuid;
+
     public Date date;
 }

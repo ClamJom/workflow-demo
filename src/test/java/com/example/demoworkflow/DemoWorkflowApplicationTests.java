@@ -329,7 +329,7 @@ class DemoWorkflowApplicationTests {
                   "id": 1,
                   "name": "condition1",
                   "type": "Condition",
-                  "value": "{\\"operator\\":\\"==\\",\\"a\\":\\"test-start:var1\\",\\"b\\":\\"test-start:var2\\",\\"nextNodes\\":[\\"test-node-2\\"]}",
+                  "value": "{\\"operator\\":\\"==\\",\\"a\\":\\"{{test-start:var1}}\\",\\"b\\":\\"{{test-start:var2}}\\",\\"nextNodes\\":[\\"test-node-2\\"]}",
                   "k": 1,
                   "quantize": 0
                 },
@@ -337,7 +337,7 @@ class DemoWorkflowApplicationTests {
                   "id": 1,
                   "name": "condition2",
                   "type": "Condition",
-                  "value": "{\\"operator\\":\\"!=\\",\\"a\\":\\"test-start:var1\\",\\"b\\":\\"test-start:var2\\",\\"nextNodes\\":[\\"test-node-3\\"]}",
+                  "value": "{\\"operator\\":\\"!=\\",\\"a\\":\\"{{test-start:var1}}\\",\\"b\\":\\"{{test-start:var2}}\\",\\"nextNodes\\":[\\"test-node-3\\"]}",
                   "k": 1,
                   "quantize": 0
                 }
@@ -382,7 +382,7 @@ class DemoWorkflowApplicationTests {
                   "id": 4,
                   "name": "output",
                   "type": "List",
-                  "value": "[\\"test-node-2:message\\"]"
+                  "value": "[\\"{{test-node-2:message}}\\"]"
                 }
               ]
             }

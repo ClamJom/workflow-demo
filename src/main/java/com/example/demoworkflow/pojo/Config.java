@@ -27,6 +27,10 @@ public class Config {
     @Column(name="value")
     private String value;
 
+    @Column(name="options")
+    // 如果配置项为下拉框，则在此提供下拉选项
+    private String options;
+
     @Column(name="c_min", columnDefinition = "INT DEFAULT 0")
     private int min;
 

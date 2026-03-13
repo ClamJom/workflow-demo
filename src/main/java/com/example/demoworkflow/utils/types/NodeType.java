@@ -1,9 +1,13 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.types;
 
+import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
+import com.example.demoworkflow.utils.workflow.nodes.*;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
+import com.example.demoworkflow.vo.ConfigVO;
 import lombok.Getter;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public enum NodeType {
@@ -53,6 +57,13 @@ public enum NodeType {
         }
     }
 
+    /**
+     * 通过节点代码直接创建节点对象
+     * @param code  节点类型代码
+     * @param globalPool    工作流全局变量池
+     * @param nodeId    节点ID
+     * @return  对象
+     */
     public static NodeImpl createNodeInstanceWithNodeIdByCode(int code, GlobalPool globalPool, String nodeId){
         try{
             Class<?> clazz = nodeClazzMap.get(code);
@@ -61,5 +72,27 @@ public enum NodeType {
         }catch (Exception e){
             return null;
         }
+    }
+
+    /**
+     * 通过节点代码获取节点配置
+     * @param code  节点代码
+     * @return  节点配置
+     */
+    public static List<ConfigVO> getNodeConfigsByCode(int code){
+        NodeImpl node = createNodeInstanceByCode(code, null);
+        if(node == null) return null;
+        return node.getNodeConfigs();
+    }
+
+    /**
+     * 通过节点代码获取节点输出变量信息
+     * @param code  节点代码
+     * @return  节点输出变量信息
+     */
+    public static List<OutputVariableDes> getNodeOutputsByCode(int code){
+        NodeImpl node = createNodeInstanceByCode(code, null);
+        if(node == null) return null;
+        return node.getNodeOutputs();
     }
 }

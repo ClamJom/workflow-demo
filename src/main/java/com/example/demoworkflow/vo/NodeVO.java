@@ -1,9 +1,6 @@
 package com.example.demoworkflow.vo;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.util.List;
@@ -14,6 +11,9 @@ public class NodeVO {
     @NotNull
     @Size(max=255, min=1, message="节点ID不允许为空")
     public String id;
+
+    @Size(max=255, message="节点名称不允许超过255个字符")
+    public String name;
 
     @Min(value=0, message="节点类型不允许为空")
     public int type;

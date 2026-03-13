@@ -2,7 +2,10 @@ package com.example.demoworkflow.utils.workflow.nodes;
 
 import com.alibaba.fastjson2.JSON;
 import com.example.demoworkflow.pojo.Config;
+import com.example.demoworkflow.utils.types.ConfigTypes;
+import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.ConditionConfig;
+import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.utils.workflow.pool.NodePool;
 import com.example.demoworkflow.utils.workflow.result.WorkflowResult;
@@ -41,14 +44,14 @@ public class NodeImpl implements Node {
 
     public List<NodeImpl> nextNodes = new ArrayList<>();
 
-    NodeImpl(GlobalPool globalPool){
+    public NodeImpl(GlobalPool globalPool){
         nodeId = UUID.randomUUID().toString();
         nodePool = new NodePool(nodeId);
         this.globalPool = globalPool;
         configs = new HashMap<>();
     }
 
-    NodeImpl(GlobalPool globalPool, String nodeId){
+    public NodeImpl(GlobalPool globalPool, String nodeId){
         this.nodeId = nodeId;
         nodePool = new NodePool(nodeId);
         this.globalPool = globalPool;
@@ -100,19 +103,20 @@ public class NodeImpl implements Node {
         if(configList == null) return;
         configList.forEach(config->{
             switch(config.getType()){
-                case "Number":
+                case ConfigTypes.SLIDER:
+                case ConfigTypes.NUMBER:
                     parseNumber(config);
                     break;
-                case "List":
+                case ConfigTypes.LIST:
                     parseList(config);
                     break;
-                case "Condition":
+                case ConfigTypes.CONDITION:
                     parseCondition(config);
                     break;
-                case "Map":
+                case ConfigTypes.MAP:
                     parseMap(config);
                     break;
-                case "Boolean":
+                case ConfigTypes.BOOLEAN:
                     configs.put(config.getName(), config.getValue().equalsIgnoreCase("true"));
                     break;
                 default:
@@ -164,6 +168,10 @@ public class NodeImpl implements Node {
      * @return 当前节点所需的配置名称
      */
     public List<ConfigVO> getNodeConfigs(){
+        return new ArrayList<>();
+    }
+
+    public List<OutputVariableDes> getNodeOutputs(){
         return new ArrayList<>();
     }
 

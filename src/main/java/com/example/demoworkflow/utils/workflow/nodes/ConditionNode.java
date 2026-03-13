@@ -1,5 +1,6 @@
 package com.example.demoworkflow.utils.workflow.nodes;
 
+import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.ConditionConfig;
 import com.example.demoworkflow.utils.workflow.misc.NumberComparator;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
@@ -92,8 +93,8 @@ public class ConditionNode extends NodeImpl{
         List<String> conditions = (List<String>) configs.computeIfAbsent("<|CONDITIONS|>", k -> new ArrayList<>());
         conditions.forEach(condition->{
             ConditionConfig cc = (ConditionConfig) configs.get(condition);
-            Object a = globalPool.get(token, cc.a);
-            Object b = globalPool.get(token, cc.b);
+            Object a = globalPool.parseObject(cc.a, token);
+            Object b = globalPool.parseObject(cc.b, token);
             if(!compareCore(cc.operator, a, b)){
                 if(cc.nextNodes == null) return;
                 /*

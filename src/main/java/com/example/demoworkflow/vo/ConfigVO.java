@@ -21,6 +21,8 @@ public class ConfigVO {
 
     public String value;
 
+    public String options;
+
     public int min;
 
     public int max;

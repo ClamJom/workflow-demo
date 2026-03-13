@@ -21,6 +21,11 @@ public class CFileServiceImpl implements CFileService{
     }
 
     @Override
+    public List<CFile> getAllCFilesByWorkspace(String workspace) {
+        return cFileRepository.getCFilesByWorkspace(workspace);
+    }
+
+    @Override
     public void deleteCFile(CFileVO vo) {
         cFileRepository.deleteAllById(vo.id);
     }

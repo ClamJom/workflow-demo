@@ -1,9 +1,11 @@
 package com.example.demoworkflow.utils.workflow.nodes;
 
+import com.example.demoworkflow.utils.types.NodeType;
+import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.utils.workflow.result.WorkflowResult;
 import com.example.demoworkflow.utils.workflow.states.NodeStates;
-import com.example.demoworkflow.utils.workflow.states.WorkflowStates;
+import com.example.demoworkflow.vo.ConfigVO;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,14 +17,34 @@ import java.util.Map;
  */
 public class EndNode extends NodeImpl{
 
-    EndNode(GlobalPool globalPool) {
+    public EndNode(GlobalPool globalPool) {
         super(globalPool);
         this.setNodeType(NodeType.END);
     }
 
-    EndNode(GlobalPool globalPool, String nodeId) {
+    public EndNode(GlobalPool globalPool, String nodeId) {
         super(globalPool, nodeId);
         this.setNodeType(NodeType.END);
+    }
+
+    @Override
+    public List<ConfigVO> getNodeConfigs(){
+        return List.of(ConfigVO.builder()
+                        .des("输出配置")
+                        .name("output")
+                        .type("Map")
+                        .value("{}")
+                        .required(false)
+                .build());
+    }
+
+    @Override
+    public List<OutputVariableDes> getNodeOutputs(){
+        return List.of(OutputVariableDes.builder()
+                        .name("output")
+                        .type("Map")
+                        .des("工作流输出")
+                .build());
     }
 
     @Override
@@ -33,7 +55,7 @@ public class EndNode extends NodeImpl{
         List<String> outputs = (List<String>) outputObj;
         Map<String, Object> outputMap = new HashMap<>();
         outputs.forEach(output->{
-            outputMap.put(output, globalPool.get(token, output));
+            outputMap.put(output, globalPool.parseObject(output, token));
         });
         WorkflowResult outputResult = WorkflowResult.builder()
                 .token(token)

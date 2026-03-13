@@ -1,26 +1,50 @@
 package com.example.demoworkflow.utils.workflow.nodes;
 
-import com.example.demoworkflow.utils.token.Token;
+import com.example.demoworkflow.utils.types.NodeType;
+import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
-import com.example.demoworkflow.utils.workflow.pool.NodePool;
+import com.example.demoworkflow.vo.ConfigVO;
+
+import java.util.List;
 
 /**
  * 起始节点
  * 绝对不要在单个流程图中添加多个起始节点，这将导致程序无法判断流程图入口，可能从随机入口执行流程图
  */
 public class StartNode extends NodeImpl {
-    StartNode(GlobalPool globalPool){
+    public StartNode(GlobalPool globalPool){
         super(globalPool);
         this.setNodeType(NodeType.START);
     }
 
-    StartNode(GlobalPool globalPool, String uuid){
+    public StartNode(GlobalPool globalPool, String uuid){
         super(globalPool, uuid);
         this.setNodeType(NodeType.START);
     }
 
     @Override
+    public List<ConfigVO> getNodeConfigs(){
+        return List.of(ConfigVO.builder()
+                        .des("输入")
+                        .name("input")
+                        .type("Map")
+                        .value("{}")
+                        .required(false)
+                .build());
+    }
+
+    @Override
+    public List<OutputVariableDes> getNodeOutputs(){
+        return List.of(OutputVariableDes.builder()
+                        .name("input")
+                        .type("Map")
+                        .des("输入变量")
+                .build());
+    }
+
+    @Override
     public void run(){
+        // 起始节点与其它节点不同，其没有任何默认配置项，如果有则将其作为起始节点本身的输出
         configs.keySet().forEach(key->{
             nodePool.put(key, configs.get(key));
         });

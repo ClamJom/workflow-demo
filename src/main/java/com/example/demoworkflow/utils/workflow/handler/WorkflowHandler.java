@@ -31,10 +31,14 @@ public class WorkflowHandler {
     @Resource
     private ResultHandler resultHandler;
 
-    public void handler(WorkflowVO workflowVO, HttpServletResponse rsp){
+    @Resource
+    private SseHandler sseHandler;
+
+    public String handler(WorkflowVO workflowVO){
         // 初始化流程
         Workflow workflow = Workflow.castFromVO(workflowVO, globalPool);
-        handler(workflow, rsp);
+        handler(workflow);
+        return workflow.getToken();
     }
 
     public void handler(Workflow workflow, HttpServletResponse rsp){
@@ -58,5 +62,23 @@ public class WorkflowHandler {
                     .msg("已终止流程图")
                     .state(WorkflowStates.ABORT)
                     .build());
+    }
+
+    /**
+     * SSE流式返回的调用接口
+     * @param workflow  待运行的工作流
+     */
+    @Async("workflow")
+    public void handler(Workflow workflow){
+        log.info("开始流式处理工作流");
+        globalPool.expire(workflow.getToken());
+        resultHandler.run(workflow, sseHandler);
+        globalPool.pushWorkflowResult(workflow.getToken(), WorkflowResult.builder()
+                .token(workflow.getToken())
+                .msg("开始执行流程图")
+                .state(WorkflowStates.STAND_BY)
+                .build());
+        globalPool.workflowRunning(workflow.getToken());
+        nodeHandler.run(workflow.getStartNode());
     }
 }

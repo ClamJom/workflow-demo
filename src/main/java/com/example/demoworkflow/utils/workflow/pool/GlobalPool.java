@@ -224,4 +224,16 @@ public class GlobalPool {
         }
         return dst;
     }
+
+    /**
+     * 通过变量名直接获取对象
+     * @param name  变量名
+     * @param token 当前工作流的Token
+     * @return  对象
+     */
+    public Object parseObject(String name, String token){
+        name = name.replaceAll("\\{\\{", "");
+        name = name.replaceAll("}}", "");
+        return get(token, name);
+    }
 }

@@ -1,5 +1,9 @@
 package com.example.demoworkflow.utils.workflow.nodes;
 
+import com.alibaba.fastjson2.JSON;
+import com.example.demoworkflow.utils.types.ConfigTypes;
+import com.example.demoworkflow.utils.types.NodeType;
+import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.utils.workflow.result.WorkflowResult;
 import com.example.demoworkflow.vo.ConfigVO;
@@ -30,12 +34,12 @@ public class HTTPRequestNode extends NodeImpl{
 
     private WebClient.RequestBodySpec spec;
 
-    HTTPRequestNode(GlobalPool globalPool) {
+    public HTTPRequestNode(GlobalPool globalPool) {
         super(globalPool);
         setNodeType(NodeType.HTTP);
     }
 
-    HTTPRequestNode(GlobalPool globalPool, String nodeId) {
+    public HTTPRequestNode(GlobalPool globalPool, String nodeId) {
         super(globalPool, nodeId);
         setNodeType(NodeType.HTTP);
     }
@@ -45,60 +49,70 @@ public class HTTPRequestNode extends NodeImpl{
         List<ConfigVO> defaultConfigs = new ArrayList<>();
         defaultConfigs.add(ConfigVO.builder()
                 .name("Url")
-                .type("String")
+                .type(ConfigTypes.STRING)
                 .des("网络请求基础地址")
                 .value("https://www.example.com")
                 .required(true)
                 .build());
         defaultConfigs.add(ConfigVO.builder()
                 .name("Uri")
-                .type("String")
+                .type(ConfigTypes.STRING)
                 .des("资源地址")
                 .required(false)
                 .value("")
                 .build());
         defaultConfigs.add(ConfigVO.builder()
                 .name("Method")
-                .type("String")
+                .type(ConfigTypes.SELECT)
+                .options(JSON.toJSONString(List.of("GET", "POST", "PUT", "DELETE", "PATCH")))
                 .des("网络请求模式")
                 .value("GET")
                 .required(true)
                 .build());
         defaultConfigs.add(ConfigVO.builder()
                 .name("Headers")
-                .type("Map")
+                .type(ConfigTypes.MAP)
                 .des("请求头")
                 .value("{}")
                 .required(false)
                 .build());
         defaultConfigs.add(ConfigVO.builder()
                 .name("Data")
-                .type("Map")
+                .type(ConfigTypes.MAP)
                 .des("请求数据")
                 .value("{}")
                 .required(false)
                 .build());
         defaultConfigs.add(ConfigVO.builder()
                 .name("Timeout")
-                .type("String")
+                .type(ConfigTypes.NUMBER)
                 .des("超时时间（秒）")
                 .value("5000")
                 .required(false)
                 .build());
         defaultConfigs.add(ConfigVO.builder()
                 .name("Retry")
-                .type("Boolean")
+                .type(ConfigTypes.BOOLEAN)
                 .des("是否重试")
                 .value("true")
                 .required(false)
                 .build());
         defaultConfigs.add(ConfigVO.builder()
                 .name("MaxRetriedTimes")
-                .type("Number")
+                .type(ConfigTypes.NUMBER)
                 .des("最大重试次数")
                 .value("5")
                 .build());
         return defaultConfigs;
+    }
+
+    @Override
+    public List<OutputVariableDes> getNodeOutputs() {
+        return List.of(OutputVariableDes.builder()
+                        .name("output")
+                        .type("String")
+                        .des("请求结果")
+                .build());
     }
 
     private boolean hasRequestBody(String method){
@@ -136,7 +150,6 @@ public class HTTPRequestNode extends NodeImpl{
         data.forEach((key, value) -> {
             data.put(key, globalPool.parseConfig(value, token));
         });
-        // TODO: 处理配置并初始化
         // 配置超时
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout)
@@ -166,15 +179,18 @@ public class HTTPRequestNode extends NodeImpl{
 
     @Override
     public void run(){
-        // TODO: 请求并返回结果
-        Mono<Object> rsp = spec.retrieve().bodyToMono(Object.class);
-        Object result = rsp.block();
-        nodePool.put("output", result);
-        putWorkflowResult(WorkflowResult.builder()
-                .token(token)
-                .nodeId(nodeId)
-                .msg("请求结果")
-                .extData(result)
-                .build());
+        try {
+            Mono<Object> rsp = spec.retrieve().bodyToMono(Object.class);
+            Object result = rsp.block();
+            nodePool.put("output", result);
+            putWorkflowResult(WorkflowResult.builder()
+                    .token(token)
+                    .nodeId(nodeId)
+                    .msg("请求结果")
+                    .extData(result)
+                    .build());
+        }catch (Exception e){
+            onNodeError(e.getMessage());
+        }
     }
 }

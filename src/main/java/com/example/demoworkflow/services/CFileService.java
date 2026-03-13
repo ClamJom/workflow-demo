@@ -17,4 +17,6 @@ public interface CFileService {
     List<CFile> getAllCFiles();
 
     CFile getCFileByWorkspaceAndUuid(String workspace, String uuid);
+
+    List<CFile> getAllCFilesByWorkspace(String workspace);
 }

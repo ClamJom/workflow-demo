@@ -41,6 +41,18 @@ public class ResultHandler {
         }
     }
 
+    @Async("workflow")
+    public void run(Workflow workflow, SseHandler sseHandler){
+        globalPool.initResultHandler(workflow.getToken());
+        try{
+            handler(workflow, sseHandler);
+        }catch(Exception e){
+            log.error("结果处理线程运行出错", e);
+            globalPool.resultHandlerError(workflow.getToken());
+            globalPool.workflowError(workflow.getToken());
+        }
+    }
+
     /**
      * 工作流结果处理线程
      * @param rsp   HTTP响应对象，向其中写入生成的结果
@@ -80,5 +92,34 @@ public class ResultHandler {
         globalPool.resultHandlerDone(workflow.getToken());
         // 最后清理变量池
         globalPool.deleteAll(token);
+    }
+
+    private void handler(Workflow workflow, SseHandler sseHandler){
+        globalPool.resultHandlerRunning(workflow.getToken());
+        String token = workflow.getToken();
+        while(true){
+            WorkflowResult result = globalPool.pollWorkflowResult(token);
+            if(workflow.isEnded() && result == null){
+                globalPool.pushWorkflowResult(token, WorkflowResult.builder()
+                        .token(token)
+                        .msg("流程运行完毕")
+                        .state(WorkflowStates.DONE)
+                        .build());
+                break;
+            }
+            if(result == null) continue;
+            sseHandler.send(workflow.getToken(), JSON.toJSONString(result));
+        }
+        while(true){
+            // 对剩余的Result进行清理
+            WorkflowResult result = globalPool.pollWorkflowResult(token);
+            if(result == null) break;
+            sseHandler.send(workflow.getToken(), JSON.toJSONString(result));
+        }
+        // 没有意义。实际上写入后马上就会被删除，此处保留
+        globalPool.resultHandlerDone(workflow.getToken());
+        // 最后清理变量池
+        globalPool.deleteAll(token);
+        sseHandler.close(token);
     }
 }
