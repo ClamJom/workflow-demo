@@ -4,6 +4,8 @@
 
 这是一个由Java构建的Spring Boot后端、Vue前端的Workflow项目，能够并发的执行工作流中的分支。通过Redis记录工作流的各项工作以及其中的变量，可以随时监控工作流的进度信息。
 
+目前，该项目仍然处于Demo阶段，您可以自定义节点并将其放入流程图中运行以测试其效果。
+
 ## 工作原理
 
 ```mermaid
@@ -96,16 +98,24 @@ End --> E(End)
 npm install & npm run dev
 ```
 
+### 演示
+
+![并发运行](imgs/1.png)
+
+![条件](imgs/2.png)
+
+![变量池获取注入](imgs/3.png)
+
+![带条件的流程图运行](imgs/4.png)
+
+![流程图预检与错误提示](imgs/5.png)
+
 ## TODO
 
-1. 提供直接SSE返回的ResultHandler方法，当指定Workflow需要以SSE返回时，ResultHandler应当通过当前工作流token指定的SseEmitter返回结果信息（JSON格式）；
+1. 完善HTTPRequestNode，使其能够完整的完成用户配置的请求；
 
-2. 完善HTTPRequestNode，使其能够完整的完成用户配置的请求；
+2. 添加模型供应商配置（OpenAI规范），并实现大模型节点（LLMNode）；
 
-3. 添加模型供应商配置（OpenAI规范），并实现大模型节点（LLMNode）；
+3. 文件上传与读取（主要为流程图）；
 
-4. 完成前端的编写，包括实体的CRUD以及流程图的编辑运行；
-
-5. 文件上传与读取（主要为流程图）；
-
-6. ....
+4. ....

@@ -13,7 +13,7 @@ public class SseHandler {
     private final Map<String, SseEmitter> sseEmitters = new ConcurrentHashMap<>();
 
     public SseEmitter connect(String token){
-        sseEmitters.computeIfAbsent(token, k->{
+        sseEmitters.computeIfPresent(token, (k, v)->{
             sseEmitters.remove(token);
             return null;
         });

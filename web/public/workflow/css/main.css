@@ -1,0 +1,34 @@
+.workflow-node{
+    position: relative;
+    background-color: rgb(231, 231, 231);
+    box-shadow: 0 0 3px gray;
+    border-radius: 5px;
+    width: fit-content;
+    height: fit-content;
+    padding: 5px;
+    /* 确保 Handle 不被裁剪 */
+    overflow: visible;
+}
+
+/* Vue-Flow Handle 全局样式 */
+.vue-flow__handle {
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important;
+    background: #fff !important;
+    border: 2px solid #555 !important;
+    cursor: crosshair !important;
+}
+
+.vue-flow__handle:hover {
+    background: #1677ff !important;
+    border-color: #1677ff !important;
+}
+
+.vue-flow__handle-left {
+    left: -6px !important;
+}
+
+.vue-flow__handle-right {
+    right: -6px !important;
+}

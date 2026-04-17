@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { Form, Textarea, AutoComplete, Tooltip } from 'ant-design-vue';
 
 const props = defineProps({
@@ -14,18 +14,22 @@ const props = defineProps({
   pool: {
     type: Array,
     default: () => []
+  },
+  /** 刷新上游变量池（输入 `/` 前调用，与当前画布边一致） */
+  requestPoolRefresh: {
+    type: Function,
+    default: null
   }
 });
 
 const emit = defineEmits(['update:modelValue']);
 
-// 内部维护的值
 const inputValue = ref('');
+const textareaRef = ref(null);
 
 const cacheBefore = ref('');
 const cacheAfter = ref('');
 
-// 搜索过滤后的选项
 const filteredOptions = computed(() => {
   if (!props.pool || props.pool.length === 0) return [];
   return props.pool.map(item => ({
@@ -35,43 +39,61 @@ const filteredOptions = computed(() => {
   }));
 });
 
-// 是否显示下拉框
 const visible = ref(false);
 
-// 初始化值
-function initValue() {
-  inputValue.value = props.modelValue || '';
+function getTextareaEl() {
+  const root = textareaRef.value;
+  if (!root) return null;
+  return root.resizableTextArea?.textArea || root.$el?.querySelector?.('textarea') || null;
 }
 
-// 组件挂载时初始化
-onMounted(() => {
-  initValue();
+watch(() => props.modelValue, (v) => {
+  const s = v ?? '';
+  if (s !== inputValue.value) {
+    inputValue.value = s;
+  }
+}, { immediate: true });
+
+watch(inputValue, (val) => {
+  emit('update:modelValue', val);
 });
 
-// 输入变化时处理
-function onInputChange(e) {
-  // 检查是否需要显示下拉框
-  if(e.data !== "/" || filteredOptions.value.length === 0) return;
-  // 当输入包含 / 字符时显示选项
-  visible.value = true;
-  const input = document.querySelector('.string-config textarea');
-  if (!input) return;
-  // 无论如何，只要输入了 / 字符，就先将前后部分缓存，方便后续组装
-  const cursorPos = input.selectionStart;
-  const currentValue = inputValue.value;
-  cacheBefore.value = currentValue.substring(0, cursorPos - 1);
-  cacheAfter.value = currentValue.substring(cursorPos);
+async function onTextareaKeydown(e) {
+  if (e.key !== '/') return;
+  if (props.requestPoolRefresh) {
+    try {
+      await props.requestPoolRefresh();
+    } catch {
+      /* ignore */
+    }
+  }
+  await nextTick();
+  if (filteredOptions.value.length === 0) return;
+  // 需在下一帧读 DOM：此时 `/` 已写入 textarea，且 AutoComplete 默认会按输入过滤选项，必须关闭过滤才能显示变量列表
+  nextTick(() => {
+    const ta = getTextareaEl();
+    if (!ta) return;
+    const val = ta.value;
+    const pos = ta.selectionStart;
+    if (pos >= 1 && val.charAt(pos - 1) === '/') {
+      cacheBefore.value = val.slice(0, pos - 1);
+      cacheAfter.value = val.slice(pos);
+      visible.value = true;
+    }
+  });
 }
 
-// 选择选项时处理
+function onDropdownVisibleChange(open) {
+  if (!open) {
+    visible.value = false;
+  }
+}
+
 function onSelect(value) {
   inputValue.value = cacheBefore.value + value + cacheAfter.value;
-  // 清理缓存并关闭下拉选项
-  cacheBefore.value = "";
-  cacheAfter.value = "";
+  cacheBefore.value = '';
+  cacheAfter.value = '';
   visible.value = false;
-
-  emit('update:modelValue', inputValue.value);
 }
 </script>
 
@@ -84,12 +106,17 @@ function onSelect(value) {
             v-model:value="inputValue"
             :options="filteredOptions"
             :open="visible"
-            placeholder="输入 / 选择变量或直接输入内容"
+            :filter-option="false"
+            placeholder="输入 // 选择变量或直接输入内容"
             style="width: 100%"
-            @input="onInputChange"
             @select="onSelect"
+            @dropdown-visible-change="onDropdownVisibleChange"
           >
-            <Textarea :rows="1" />
+            <Textarea
+              ref="textareaRef"
+              :rows="3"
+              @keydown="onTextareaKeydown"
+            />
           </AutoComplete>
         </Tooltip>
       </Form.Item>

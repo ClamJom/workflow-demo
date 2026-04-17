@@ -4,6 +4,7 @@ import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.ConditionConfig;
 import com.example.demoworkflow.utils.workflow.misc.NumberComparator;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
+import com.example.demoworkflow.vo.ConfigVO;
 
 import java.util.ArrayList;
 import java.util.List;

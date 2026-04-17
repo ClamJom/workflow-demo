@@ -47,9 +47,9 @@ onMounted(() => {
   initDisplayValue();
 });
 
-// 值变化时同步到 modelValue
-function onChange(value) {
-  emit('update:modelValue', actualValue);
+// 值变化时同步到 modelValue（后端以字符串存储）
+function onChange() {
+  emit('update:modelValue', String(actualValue.value));
 }
 </script>
 

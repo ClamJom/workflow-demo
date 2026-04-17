@@ -103,7 +103,7 @@ public class WorkflowController {
     @RequestMapping(path="/workflow", method=RequestMethod.PUT)
     public void updateWorkflow(@RequestBody WorkflowVO workflowVO, @RequestParam String uuid) {
         workflowFS.deleteWorkflow(uuid);
-        workflowFS.saveWorkflow(workflowVO);
+        workflowFS.saveWorkflow(workflowVO, uuid);
     }
 
     @Operation(description = "删除工作流")

@@ -32,8 +32,8 @@ public class EndNode extends NodeImpl{
         return List.of(ConfigVO.builder()
                         .des("输出配置")
                         .name("output")
-                        .type("Map")
-                        .value("{}")
+                        .type("List")
+                        .value("[]")
                         .required(false)
                 .build());
     }

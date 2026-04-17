@@ -234,6 +234,7 @@ public class GlobalPool {
     public Object parseObject(String name, String token){
         name = name.replaceAll("\\{\\{", "");
         name = name.replaceAll("}}", "");
-        return get(token, name);
+        Object ret = get(token, name);
+        return ret != null ? ret : name;
     }
 }

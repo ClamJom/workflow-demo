@@ -129,6 +129,7 @@ public class NodeHandler {
                         .msg(e.getMessage())
                         .build());
         globalPool.workflowError(node.token);
+        log.error("节点运行出错", e);
     }
 
     @Async("workflow")

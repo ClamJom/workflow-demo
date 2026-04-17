@@ -38,6 +38,10 @@ public class WorkflowFileUtils extends FSUtilsBase {
 
     public boolean saveWorkflow(WorkflowVO workflow){
         String uuid = UUID.randomUUID().toString();
+        return saveWorkflow(workflow, uuid);
+    }
+
+    public boolean saveWorkflow(WorkflowVO workflow, String uuid){
         try{
             cFileService.addCFile(workflow.name, workPath, uuid);
             write(uuid, workflow);

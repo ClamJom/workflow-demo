@@ -2,119 +2,317 @@
 import {
     Layout,
     LayoutSider,
-    LayoutHeader,
     LayoutContent,
     Button,
+    Tooltip,
+    Popconfirm,
+    message,
+    Empty,
+    Spin,
 } from "ant-design-vue";
-import {VueFlow} from "@vue-flow/core";
-import {Controls} from "@vue-flow/controls";
-import WorkflowTypes from "../types/workflow";
-
-import '@vue-flow/core/dist/style.css'
+import {
+    PlusOutlined,
+    DeleteOutlined,
+    FileTextOutlined,
+} from "@ant-design/icons-vue";
 import {onMounted, ref} from "vue";
 import api from "../api";
+import WorkflowPreview from "../components/WorkflowPreview.vue";
 
 const workflowApis = api.workflow;
 
-const pageWidth = ref(100);
-const pageHeight = ref(100);
-
-const flowContainer = ref(null);
-const flowBody = ref(null);
-
+/** 工作流列表（仅包含摘要信息，不含节点详情） */
 const workflows = ref([]);
-const currentWorkflow = ref(null);
+/** 当前选中的工作流 UUID */
+const currentUUID = ref(null);
+/** 列表加载状态 */
+const listLoading = ref(false);
+/** 新建工作流加载状态 */
+const creating = ref(false);
 
 /**
- * 处理侧边栏的工作流名称点击事件
- * @param uuid  工作流的UUID
+ * 子组件保存工作流成功后刷新左侧列表名称
  */
-function handleWorkflowClicked(uuid){
-  console.log(uuid);
-}
-
-function handlerNewWorkflow(){
-  const workflow = new WorkflowTypes.Workflow();
-  workflowApis.saveWorkflow(workflow).then(res=>{
+function onWorkflowSaved() {
     getAllWorkflows();
-  })
 }
 
 /**
- * 获取页面大小，备用
+ * 获取所有工作流摘要列表
  */
-function updatePageSize(){
-  pageWidth.value = window.innerWidth;
-  pageHeight.value = window.innerHeight;
+async function getAllWorkflows() {
+    listLoading.value = true;
+    try {
+        const res = await workflowApis.getWorkflows();
+        workflows.value = res.data || [];
+    } catch (err) {
+        message.error('获取工作流列表失败');
+        console.error('[App] 获取工作流列表失败', err);
+    } finally {
+        listLoading.value = false;
+    }
 }
 
 /**
- * 获取所有工作流
+ * 点击工作流列表项，切换当前工作流
+ * @param {string} uuid
  */
-function getAllWorkflows(){
-  workflowApis.getWorkflows().then(res=>{
-    // 这里只获取工作流的信息，但不获取详情（包括节点信息等）
-    workflows.value = res.data;
-  })
+function handleWorkflowClicked(uuid) {
+    currentUUID.value = uuid;
 }
 
 /**
- * 如果是开发环境，将API挂载到window上，方便调试
+ * 新建工作流
  */
-function hookApiToWindowIfDev(){
-  if(import.meta.env.PROD) return;
-  window.workflowApis = workflowApis;
+async function handleNewWorkflow() {
+    creating.value = true;
+    try {
+        const workflow = {name: '新建工作流', nodes: [], edges: []};
+        await workflowApis.saveWorkflow(workflow);
+        await getAllWorkflows();
+        // 自动选中最新创建的工作流（列表末尾）
+        if (workflows.value.length > 0) {
+            currentUUID.value = workflows.value[workflows.value.length - 1].uuid;
+        }
+    } catch (err) {
+        message.error('新建工作流失败');
+        console.error('[App] 新建工作流失败', err);
+    } finally {
+        creating.value = false;
+    }
 }
 
 /**
- * 调试
+ * 删除工作流
+ * @param {string} uuid
  */
-function debug(){
-  const workflow = new WorkflowTypes.Workflow();
-  console.log(JSON.stringify(workflow))
+async function handleDeleteWorkflow(uuid) {
+    try {
+        await workflowApis.deleteWorkflow(uuid);
+        message.success('已删除');
+        // 若删除的是当前选中的工作流，则清空选中
+        if (currentUUID.value === uuid) {
+            currentUUID.value = null;
+        }
+        await getAllWorkflows();
+    } catch (err) {
+        message.error('删除工作流失败');
+        console.error('[App] 删除工作流失败', err);
+    }
 }
 
-onMounted(()=>{
-  updatePageSize();
-  hookApiToWindowIfDev();
-  getAllWorkflows();
-  debug();
+/**
+ * 如果是开发环境，将 API 挂载到 window 上，方便调试
+ */
+function hookApiToWindowIfDev() {
+    if (import.meta.env.PROD) return;
+    window.workflowApis = workflowApis;
+}
+
+onMounted(() => {
+    hookApiToWindowIfDev();
+    getAllWorkflows();
 });
 </script>
 
 <template>
-  <Layout class="body">
-    <LayoutSider>
-      <!-- TODO: 工作流列表置于导航栏 -->
-      <Button>新建工作流</Button>
-      <ul>
-        <li v-for="workflow in workflows" :key="workflow.id" @click="()=>{handleWorkflowClicked(workflow.uuid)}">
-          {{ workflow.name }}
-        </li>
-      </ul>
+  <Layout class="app-layout">
+    <!-- 左侧工作流列表 -->
+    <LayoutSider class="sider" :width="220" theme="light">
+      <div class="sider-header">
+        <span class="sider-title">工作流</span>
+        <Tooltip title="新建工作流">
+          <Button
+            type="primary"
+            size="small"
+            shape="circle"
+            :loading="creating"
+            @click="handleNewWorkflow"
+          >
+            <template #icon><PlusOutlined /></template>
+          </Button>
+        </Tooltip>
+      </div>
+
+      <div class="sider-body">
+        <Spin :spinning="listLoading">
+          <!-- 空状态 -->
+          <Empty
+            v-if="!listLoading && workflows.length === 0"
+            :image="Empty.PRESENTED_IMAGE_SIMPLE"
+            description="暂无工作流"
+            class="empty-tip"
+          />
+
+          <!-- 工作流列表 -->
+          <ul v-else class="workflow-list">
+            <li
+              v-for="workflow in workflows"
+              :key="workflow.uuid"
+              class="workflow-item"
+              :class="{ active: currentUUID === workflow.uuid }"
+              @click="handleWorkflowClicked(workflow.uuid)"
+            >
+              <FileTextOutlined class="item-icon" />
+              <span class="item-name" :title="workflow.name || '未命名工作流'">
+                {{ workflow.name || '未命名工作流' }}
+              </span>
+              <Popconfirm
+                title="确认删除该工作流？"
+                ok-text="删除"
+                cancel-text="取消"
+                ok-type="danger"
+                @confirm.stop="handleDeleteWorkflow(workflow.uuid)"
+              >
+                <Button
+                  type="text"
+                  size="small"
+                  danger
+                  class="delete-btn"
+                  @click.stop
+                >
+                  <template #icon><DeleteOutlined /></template>
+                </Button>
+              </Popconfirm>
+            </li>
+          </ul>
+        </Spin>
+      </div>
     </LayoutSider>
-    <Layout>
-      <LayoutHeader>
-        <!-- TODO: 放置工作流名称 -->
-      </LayoutHeader>
-      <LayoutContent class="flow-container" ref="flowContainer">
-        <!-- TODO: 放置工作流主体 -->
-        <div v-if="workflows.length === 0" class="no-workflow">
-          <p>还没有工作流，您可以新建工作流</p>
-        </div>
-        <div v-else-if="currentWorkflow === null" class="no-selected-workflow">
-          <p>您可以选择历史工作流或新建工作流</p>
-        </div>
-        <VueFlow ref="flowBody" v-else>
-          <Controls />
-        </VueFlow>
-      </LayoutContent>
-    </Layout>
+
+    <!-- 右侧工作流预览/编辑区 -->
+    <LayoutContent class="content">
+      <!-- 未选中工作流时的提示 -->
+      <div v-if="!currentUUID" class="no-selection">
+        <Empty
+          :image="Empty.PRESENTED_IMAGE_SIMPLE"
+          description="请从左侧选择工作流，或新建一个工作流"
+        />
+      </div>
+
+      <!-- 工作流预览组件 -->
+      <WorkflowPreview
+        v-else
+        :key="currentUUID"
+        :uuid="currentUUID"
+        class="preview"
+        @saved="onWorkflowSaved"
+      />
+    </LayoutContent>
   </Layout>
 </template>
 
 <style scoped>
-.body{
+.app-layout {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── 左侧边栏 ── */
+.sider {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #f0f0f0;
+  overflow: hidden;
+}
+
+.sider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.sider-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.sider-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.empty-tip {
+  padding: 24px 0;
+}
+
+/* ── 工作流列表 ── */
+.workflow-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.workflow-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background 0.15s;
+  position: relative;
+}
+
+.workflow-item:hover {
+  background: #f5f5f5;
+}
+
+.workflow-item.active {
+  background: #e6f4ff;
+  color: #1677ff;
+}
+
+.item-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: #8c8c8c;
+}
+
+.workflow-item.active .item-icon {
+  color: #1677ff;
+}
+
+.item-name {
+  flex: 1;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delete-btn {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.workflow-item:hover .delete-btn {
+  opacity: 1;
+}
+
+/* ── 右侧内容区 ── */
+.content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.no-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.preview {
   width: 100%;
   height: 100%;
 }

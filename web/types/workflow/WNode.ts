@@ -9,4 +9,6 @@ export default class WNode{
     name?: string = '';
     type: number = 0x00;
     configs: Array<WConfig> = [];
+    /** 节点在画布上的位置，首次加载时若为空则由布局算法自动计算 */
+    position?: { x: number; y: number };
 }

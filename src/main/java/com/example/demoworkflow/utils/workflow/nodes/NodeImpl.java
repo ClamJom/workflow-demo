@@ -100,6 +100,7 @@ public class NodeImpl implements Node {
      * @param configList  配置列表
      */
     public void parseConfig(List<Config> configList){
+        // TODO: 容器配置类型的子类型配置解析
         if(configList == null) return;
         configList.forEach(config->{
             switch(config.getType()){

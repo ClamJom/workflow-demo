@@ -17,7 +17,10 @@ export function getNodeOutputs(nodeCode){
     return api.get(`/node/${nodeCode}/output`);
 }
 
-export function runWorkflow(data, config){
+/**
+ * 运行工作流（SSE）。config 可传入 fetchEventSource 的选项，如 onmessage、onerror、signal（AbortController）等。
+ */
+export function runWorkflow(data, config = {}){
     return fetchEventSource("/api/v3/workflow/run",{
         method: "POST",
         headers: {

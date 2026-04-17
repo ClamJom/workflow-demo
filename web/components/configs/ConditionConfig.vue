@@ -1,8 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { Form, Select, Textarea, AutoComplete, Tooltip, Row, Col, Button, Empty } from 'ant-design-vue';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-import {generateUUID} from "../../utils/token.js";
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { Form, Select, Textarea, AutoComplete, Tooltip, Row, Col } from 'ant-design-vue';
 
 const props = defineProps({
   config: {
@@ -16,12 +14,15 @@ const props = defineProps({
   pool: {
     type: Array,
     default: () => []
+  },
+  requestPoolRefresh: {
+    type: Function,
+    default: null
   }
 });
 
 const emit = defineEmits(['update:modelValue']);
 
-// 运算符选项
 const operatorOptions = [
   { value: '==', label: '等于 (==)' },
   { value: '!=', label: '不等于 (!=)' },
@@ -31,10 +32,85 @@ const operatorOptions = [
   { value: '>=', label: '大于等于 (>=)' }
 ];
 
-// 条件列表
-const conditions = ref([]);
+/** 单条条件（与后端 ConditionConfig 一致，含 nextNodes 由画布同步） */
+const row = ref({
+  a: '',
+  operator: '==',
+  b: '',
+  nextNodes: [],
+  cacheBefore: '',
+  cacheAfter: '',
+  cacheBeforeRight: '',
+  cacheAfterRight: '',
+  leftVisible: false,
+  rightVisible: false
+});
 
-// 搜索过滤后的选项
+let leftTaRef = null;
+let rightTaRef = null;
+/** AutoComplete 内 Textarea 的 keydown 往往不冒泡到外层，改为挂原生 textarea */
+let leftKeydownCleanup = null;
+let rightKeydownCleanup = null;
+
+function bindLeftTa(el) {
+  leftTaRef = el;
+  leftKeydownCleanup?.();
+  leftKeydownCleanup = null;
+  if (!el) return;
+  const attach = (ta) => {
+    const handler = (e) => {
+      onLeftKeydown(e);
+    };
+    ta.addEventListener('keydown', handler);
+    leftKeydownCleanup = () => {
+      ta.removeEventListener('keydown', handler);
+    };
+  };
+  nextTick(() => {
+    let ta = getTextareaEl(el);
+    if (!ta) {
+      requestAnimationFrame(() => {
+        ta = getTextareaEl(el);
+        if (ta) attach(ta);
+      });
+      return;
+    }
+    attach(ta);
+  });
+}
+
+function bindRightTa(el) {
+  rightTaRef = el;
+  rightKeydownCleanup?.();
+  rightKeydownCleanup = null;
+  if (!el) return;
+  const attach = (ta) => {
+    const handler = (e) => {
+      onRightKeydown(e);
+    };
+    ta.addEventListener('keydown', handler);
+    rightKeydownCleanup = () => {
+      ta.removeEventListener('keydown', handler);
+    };
+  };
+  nextTick(() => {
+    let ta = getTextareaEl(el);
+    if (!ta) {
+      requestAnimationFrame(() => {
+        ta = getTextareaEl(el);
+        if (ta) attach(ta);
+      });
+      return;
+    }
+    attach(ta);
+  });
+}
+
+function getTextareaEl(root) {
+  if (!root) return null;
+  return root.resizableTextArea?.textArea || root.$el?.querySelector?.('textarea') || null;
+}
+
 const filteredOptions = computed(() => {
   if (!props.pool || props.pool.length === 0) return [];
   return props.pool.map(item => ({
@@ -44,200 +120,238 @@ const filteredOptions = computed(() => {
   }));
 });
 
-// 初始化值
-function initValue() {
+function parseOneCondition(raw) {
+  const empty = { a: '', operator: '==', b: '', nextNodes: [] };
+  if (!raw || typeof raw !== 'string') return { ...empty };
   try {
-    const arr = JSON.parse(props.modelValue || '[]');
-    conditions.value = arr.map((item, index) => ({
-      id: index,
-      a: item.a || '',
-      operator: item.operator || '==',
-      b: item.b || '',
-      nextNodes: item.nextNodes || []
-    }));
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const first = parsed[0];
+      if (first && typeof first === 'object') {
+        return {
+          a: String(first.a ?? ''),
+          operator: first.operator || '==',
+          b: String(first.b ?? ''),
+          nextNodes: Array.isArray(first.nextNodes) ? first.nextNodes : []
+        };
+      }
+      return { ...empty };
+    }
+    if (parsed && typeof parsed === 'object') {
+      return {
+        a: String(parsed.a ?? ''),
+        operator: parsed.operator || '==',
+        b: String(parsed.b ?? ''),
+        nextNodes: Array.isArray(parsed.nextNodes) ? parsed.nextNodes : []
+      };
+    }
   } catch {
-    conditions.value = [];
+    /* ignore */
   }
+  return { ...empty };
 }
 
-// 组件挂载时初始化
-onMounted(() => {
-  initValue();
-});
-
-// 同步到 modelValue
-function syncToModelValue() {
-  const arr = conditions.value.map(item => ({
-    a: item.a,
-    operator: item.operator,
-    b: item.b,
-    nextNodes: item.nextNodes
-  }));
-  emit('update:modelValue', JSON.stringify(arr));
-}
-
-// 添加条件
-function addCondition() {
-  conditions.value.push({
-    id: generateUUID(),
-    a: '',
-    operator: '==',
-    b: '',
-    nextNodes: [],
-    cacheBefore: "",
-    cacheAfter: "",
+function initFromModelValue() {
+  const p = parseOneCondition(props.modelValue);
+  row.value = {
+    ...p,
+    cacheBefore: '',
+    cacheAfter: '',
+    cacheBeforeRight: '',
+    cacheAfterRight: '',
     leftVisible: false,
     rightVisible: false
-  });
-  syncToModelValue();
+  };
 }
 
-// 删除条件
-function removeCondition(id) {
-  const index = conditions.value.findIndex(item => item.id === id);
-  if (index > -1) {
-    conditions.value.splice(index, 1);
-    syncToModelValue();
+function syncToModelValue() {
+  const r = row.value;
+  const payload = {
+    a: r.a,
+    operator: r.operator,
+    b: r.b,
+    nextNodes: Array.isArray(r.nextNodes) ? r.nextNodes : []
+  };
+  emit('update:modelValue', JSON.stringify(payload));
+}
+
+onMounted(() => {
+  initFromModelValue();
+});
+
+onBeforeUnmount(() => {
+  leftKeydownCleanup?.();
+  rightKeydownCleanup?.();
+  leftKeydownCleanup = null;
+  rightKeydownCleanup = null;
+});
+
+/** 切换不同配置行时整表重载；避免 watch modelValue 以免输入时被父级回传打断 */
+watch(
+  () => props.config?._rowKey,
+  () => {
+    initFromModelValue();
   }
+);
+
+/** 画布同步仅更新 nextNodes 时合并，不重载左右值 */
+watch(
+  () => props.modelValue,
+  (nv) => {
+    try {
+      const parsed = JSON.parse(nv || '{}');
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+      if (Array.isArray(parsed.nextNodes)) {
+        row.value.nextNodes = parsed.nextNodes;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+);
+
+async function onLeftKeydown(e) {
+  if (e.key !== '/') return;
+  if (props.requestPoolRefresh) {
+    try {
+      await props.requestPoolRefresh();
+    } catch {
+      /* ignore */
+    }
+  }
+  await nextTick();
+  if (filteredOptions.value.length === 0) return;
+  nextTick(() => {
+    const ta = getTextareaEl(leftTaRef);
+    if (!ta) return;
+    const val = ta.value;
+    const pos = ta.selectionStart;
+    if (pos >= 1 && val.charAt(pos - 1) === '/') {
+      row.value.cacheBefore = val.slice(0, pos - 1);
+      row.value.cacheAfter = val.slice(pos);
+      row.value.leftVisible = true;
+    }
+  });
 }
 
-// 左值输入变化时处理
-function onLeftInputChange(e, condition) {
-  if (e.data !== "/" || filteredOptions.value.length === 0) return;
-  condition.leftVisible = true;
-  const input = document.querySelector(`.condition-config .condition-${condition.id} .left-input textarea`);
-  if (!input) return;
-  const cursorPos = input.selectionStart;
-  condition.cacheBefore = condition.a.substring(0, cursorPos - 1);
-  condition.cacheAfter = condition.a.substring(cursorPos);
-}
-
-// 左值选择选项时处理
-function onLeftSelect(value, condition) {
-  condition.a = condition.cacheBefore + value + condition.cacheAfter;
-  condition.cacheBefore = "";
-  condition.cacheAfter = "";
-  condition.leftVisible = false;
+function onLeftSelect(value) {
+  row.value.a = row.value.cacheBefore + value + row.value.cacheAfter;
+  row.value.cacheBefore = '';
+  row.value.cacheAfter = '';
+  row.value.leftVisible = false;
   syncToModelValue();
 }
 
-// 右值输入变化时处理
-function onRightInputChange(e, condition) {
-  if (e.data !== "/" || filteredOptions.value.length === 0) return;
-  condition.rightVisible = true;
-  const input = document.querySelector(`.condition-config .condition-${condition.id} .right-input textarea`);
-  if (!input) return;
-  const cursorPos = input.selectionStart;
-  condition.cacheBeforeRight = condition.b.substring(0, cursorPos - 1);
-  condition.cacheAfterRight = condition.b.substring(cursorPos);
+async function onRightKeydown(e) {
+  if (e.key !== '/') return;
+  if (props.requestPoolRefresh) {
+    try {
+      await props.requestPoolRefresh();
+    } catch {
+      /* ignore */
+    }
+  }
+  await nextTick();
+  if (filteredOptions.value.length === 0) return;
+  nextTick(() => {
+    const ta = getTextareaEl(rightTaRef);
+    if (!ta) return;
+    const val = ta.value;
+    const pos = ta.selectionStart;
+    if (pos >= 1 && val.charAt(pos - 1) === '/') {
+      row.value.cacheBeforeRight = val.slice(0, pos - 1);
+      row.value.cacheAfterRight = val.slice(pos);
+      row.value.rightVisible = true;
+    }
+  });
 }
 
-// 右值选择选项时处理
-function onRightSelect(value, condition) {
-  condition.b = condition.cacheBeforeRight + value + condition.cacheAfterRight;
-  condition.cacheBeforeRight = "";
-  condition.cacheAfterRight = "";
-  condition.rightVisible = false;
+function onRightSelect(value) {
+  row.value.b = row.value.cacheBeforeRight + value + row.value.cacheAfterRight;
+  row.value.cacheBeforeRight = '';
+  row.value.cacheAfterRight = '';
+  row.value.rightVisible = false;
   syncToModelValue();
 }
 
-// 运算符变化时处理
-function onOperatorChange(value, condition) {
-  condition.operator = value;
+function onOperatorChange(value) {
+  row.value.operator = value;
   syncToModelValue();
 }
 
-// 左值直接输入变化
-function onLeftValueChange(e, condition) {
+function onLeftValueUpdate(v) {
+  row.value.a = v;
   syncToModelValue();
 }
 
-// 右值直接输入变化
-function onRightValueChange(e, condition) {
+function onRightValueUpdate(v) {
+  row.value.b = v;
   syncToModelValue();
 }
 </script>
 
 <template>
   <div class="condition-config">
-    <div v-if="conditions.length === 0" class="empty-tip">
-      <Empty :description="'暂无条件，点击下方按钮添加'" :image="Empty.PRESENTED_IMAGE_SIMPLE" />
-    </div>
-    
-    <div v-for="condition in conditions" :key="condition.id" class="condition-item" :class="`condition-${condition.id}`">
-      <Form layout="vertical">
-        <Row :gutter="8" type="flex" align="middle">
-          <Col :span="9">
-            <Form.Item label="左值">
-              <Tooltip title="输入 / 选择变量">
-                <AutoComplete
-                  v-model:value="condition.a"
-                  class="left-input"
-                  :options="filteredOptions"
-                  :open="condition.leftVisible"
-                  placeholder="输入 / 选择变量"
-                  style="width: 100%"
-                  @input="(e) => onLeftInputChange(e, condition)"
-                  @select="(value) => onLeftSelect(value, condition)"
-                  @change="(e) => onLeftValueChange(e, condition)"
-                  @blur="()=>{condition.leftVisible = false}"
-                >
-                  <Textarea :rows="1" />
-                </AutoComplete>
-              </Tooltip>
-            </Form.Item>
-          </Col>
-          <Col :span="4">
-            <Form.Item label="运算符">
-              <Select
-                v-model:value="condition.operator"
-                :options="operatorOptions"
-                style="width: 100%"
-                @change="(value) => onOperatorChange(value, condition)"
-              />
-            </Form.Item>
-          </Col>
-          <Col :span="9">
-            <Form.Item label="右值">
-              <Tooltip title="输入 / 选择变量">
-                <AutoComplete
-                  v-model:value="condition.b"
-                  class="right-input"
-                  :options="filteredOptions"
-                  :open="condition.rightVisible"
-                  placeholder="输入 / 选择变量"
-                  style="width: 100%"
-                  @input="(e) => onRightInputChange(e, condition)"
-                  @select="(value) => onRightSelect(value, condition)"
-                  @change="(e) => onRightValueChange(e, condition)"
-                  @blur="()=>{condition.rightVisible = false}"
-                >
-                  <Textarea :rows="1" />
-                </AutoComplete>
-              </Tooltip>
-            </Form.Item>
-          </Col>
-          <Col :span="2">
-            <Button 
-              type="text" 
-              danger 
-              @click="removeCondition(condition.id)"
-              class="delete-btn"
-            >
-              <DeleteOutlined />
-            </Button>
-          </Col>
-        </Row>
-      </Form>
-    </div>
-
+    <p class="condition-hint"></p>
     <Form layout="vertical">
-      <Form.Item>
-        <Button type="dashed" block @click="addCondition">
-          <PlusOutlined />
-          添加条件
-        </Button>
-      </Form.Item>
+      <Row :gutter="8" align="middle">
+        <Col :span="8">
+          <Form.Item label="左值">
+            <Tooltip title="输入值或通过{{节点ID:变量名}}输入上游节点变量">
+              <AutoComplete
+                :value="row.a"
+                class="left-input"
+                :options="filteredOptions"
+                :open="row.leftVisible"
+                :filter-option="false"
+                placeholder="输入值或通过{{节点ID:变量名}}输入上游节点变量"
+                style="width: 100%"
+                @select="onLeftSelect"
+                @update:value="onLeftValueUpdate"
+                @dropdown-visible-change="(open) => { if (!open) row.leftVisible = false }"
+              >
+                <Textarea
+                  :ref="bindLeftTa"
+                  :rows="1"
+                />
+              </AutoComplete>
+            </Tooltip>
+          </Form.Item>
+        </Col>
+        <Col :span="8">
+          <Form.Item label="运算符">
+            <Select
+              v-model:value="row.operator"
+              :options="operatorOptions"
+              style="width: 100%"
+              @change="onOperatorChange"
+            />
+          </Form.Item>
+        </Col>
+        <Col :span="8">
+          <Form.Item label="右值">
+            <Tooltip title="输入值或通过{{节点ID:变量名}}输入上游节点变量">
+              <AutoComplete
+                :value="row.b"
+                class="right-input"
+                :options="filteredOptions"
+                :open="row.rightVisible"
+                :filter-option="false"
+                placeholder="输入值或通过{{节点ID:变量名}}输入上游节点变量"
+                style="width: 100%"
+                @select="onRightSelect"
+                @update:value="onRightValueUpdate"
+                @dropdown-visible-change="(open) => { if (!open) row.rightVisible = false }"
+              >
+                <Textarea
+                  :ref="bindRightTa"
+                  :rows="1"
+                />
+              </AutoComplete>
+            </Tooltip>
+          </Form.Item>
+        </Col>
+      </Row>
     </Form>
   </div>
 </template>
@@ -247,22 +361,11 @@ function onRightValueChange(e, condition) {
   width: 100%;
 }
 
-.condition-item {
-  margin-bottom: 8px;
-  padding: 8px;
-  background: #fafafa;
-  border-radius: 4px;
-}
-
-.empty-tip {
-  padding: 16px 0;
-}
-
-.delete-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
+.condition-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.5;
 }
 
 :deep(.ant-form-item) {

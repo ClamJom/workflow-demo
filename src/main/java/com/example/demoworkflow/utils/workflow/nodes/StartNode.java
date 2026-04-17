@@ -6,6 +6,7 @@ import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.vo.ConfigVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 起始节点
@@ -20,26 +21,6 @@ public class StartNode extends NodeImpl {
     public StartNode(GlobalPool globalPool, String uuid){
         super(globalPool, uuid);
         this.setNodeType(NodeType.START);
-    }
-
-    @Override
-    public List<ConfigVO> getNodeConfigs(){
-        return List.of(ConfigVO.builder()
-                        .des("输入")
-                        .name("input")
-                        .type("Map")
-                        .value("{}")
-                        .required(false)
-                .build());
-    }
-
-    @Override
-    public List<OutputVariableDes> getNodeOutputs(){
-        return List.of(OutputVariableDes.builder()
-                        .name("input")
-                        .type("Map")
-                        .des("输入变量")
-                .build());
     }
 
     @Override
