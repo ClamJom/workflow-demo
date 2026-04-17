@@ -18,6 +18,7 @@ public enum NodeType {
     HELLO("问候", 0x000003),
     CONDITION("条件", 0x000004),
     HTTP("网络请求", 0x000005),
+    SLEEP("休眠", 0x000006),
     ;
 
     @Getter
@@ -34,6 +35,7 @@ public enum NodeType {
         nodeClazzMap.put(HELLO.getCode(), HelloNode.class);
         nodeClazzMap.put(CONDITION.getCode(), ConditionNode.class);
         nodeClazzMap.put(HTTP.getCode(), HTTPRequestNode.class);
+        nodeClazzMap.put(SLEEP.getCode(), SleepNode.class);
     }
 
     NodeType(String name, int code){

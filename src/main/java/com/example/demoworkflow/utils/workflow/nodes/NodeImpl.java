@@ -59,7 +59,7 @@ public class NodeImpl implements Node {
     }
 
     private void parseNumber(Config config){
-        int k = config.getK();
+        int k = config.getK() <= 0 ? 1 : config.getK();
         if(k == 1) {
             configs.put(config.getName(), Integer.parseInt(config.getValue()));
             return;
