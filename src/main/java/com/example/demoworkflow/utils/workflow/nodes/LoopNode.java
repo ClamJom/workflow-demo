@@ -1,5 +1,6 @@
 package com.example.demoworkflow.utils.workflow.nodes;
 
+import com.alibaba.fastjson2.JSON;
 import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
@@ -14,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class LoopNode extends NodeImpl{
+    private final List<Object> outputs = new ArrayList<>();
     public LoopNode(GlobalPool globalPool) {
         super(globalPool);
         this.setNodeType(NodeType.LOOP);
@@ -107,7 +109,12 @@ public class LoopNode extends NodeImpl{
                 onNodeError("等待循环执行完成超时");
                 break;
             }
+            // 序列化与反序列化深拷贝
+            Object output = subEndNode.nodePool.get("output");
+            String strCopy = JSON.toJSONString(output);
+            outputs.add(JSON.parse(strCopy));
             clearNodeStates();
         }
+        nodePool.put("output", outputs);
     }
 }

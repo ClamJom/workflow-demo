@@ -224,6 +224,11 @@ public class GlobalPool {
         }
         for(String item : variables){
             if(pool.get(item) == null) continue;
+            Object cache  = get(token, item);
+            if (cache instanceof String){
+                dst = dst.replaceAll("\\{\\{"+item+ "}}", (String) cache);
+                continue;
+            }
             dst = dst.replaceAll("\\{\\{"+item+ "}}", JSON.toJSONString(get(token, item)));
         }
         return dst;
