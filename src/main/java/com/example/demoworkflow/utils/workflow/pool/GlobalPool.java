@@ -224,6 +224,10 @@ public class GlobalPool {
         putBreakSignal(token, loopId, false);
     }
 
+    public void deleteBreakSignal(String token, String loopId){
+        delete(token, breakSignalFactory(loopId));
+    }
+
     public boolean getBreakSignal(String token, String loopId){
         Boolean s = (Boolean) get(token, breakSignalFactory(loopId));
         if (s == null) {
