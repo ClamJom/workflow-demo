@@ -40,14 +40,14 @@ export const NODE_TYPE_CODE = {
     HELLO: 0x000003,
     CONDITION: 0x000004,
     HTTP: 0x000005,
-    /** 与 NodeType.LOOP 一致：0x000007 | NESTABLE_FLAG */
     LOOP: 0x000007 | NESTABLE_FLAG,
     WHILE_LOOP: 0x000008 | NESTABLE_FLAG,
     BREAK: 0x000009,
+    VARIABLE_ASSIGN: 0x00000A,
 };
 
 /**
- * 是否为可嵌套容器节点（当前仅 Loop，与后端 NESTABLE_FLAG 一致）
+ * 是否为可嵌套容器节点
  * @param {number} code
  * @returns {boolean}
  */

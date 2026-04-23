@@ -1,8 +1,10 @@
 <script setup>
 import {Handle, Position} from '@vue-flow/core';
-import {computed} from 'vue';
+import {computed, ref} from 'vue';
 
 const props = defineProps(['id', 'data']);
+
+const noCondition = ref(true);
 
 /**
  * 每条 type===Condition 的配置对应一行 UI 与一个 source-{index} 句柄（与后端多条 Condition 配置一致）
@@ -15,8 +17,10 @@ const conditionRows = computed(() => {
 
   const list = wnode.configs.filter(c => c.type === 'Condition');
   if (list.length === 0) {
+    noCondition.value = true;
     return [{key: 'placeholder', shortLabel: '（请添加条件配置）', fullLabel: '', isPlaceholder: true}];
   }
+  noCondition.value = false;
 
   return list.map((cfg, index) => {
     try {
@@ -72,6 +76,7 @@ const uiStateClass = computed(() => {
       >
         <span class="condition-expr" :title="row.fullLabel">{{ row.shortLabel }}</span>
         <Handle
+          v-if="!noCondition"
           type="source"
           :position="Position.Right"
           :id="`source-${index}`"

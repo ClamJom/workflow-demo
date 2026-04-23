@@ -100,7 +100,7 @@ function onSelect(value) {
 <template>
   <div class="string-config">
     <Form layout="vertical">
-      <Form.Item :label="config.des || config.name">
+      <Form.Item :label="config.name">
         <Tooltip :title="config.des">
           <AutoComplete
             v-model:value="inputValue"

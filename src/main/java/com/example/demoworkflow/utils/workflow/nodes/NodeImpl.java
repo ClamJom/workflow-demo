@@ -23,6 +23,7 @@ import java.util.*;
  */
 @Data
 public class NodeImpl implements Node {
+    public final String CONDITIONS_FLAG = "<|CONDITIONS|>";
     private NodeType nodeType = NodeType.EMPTY_NODE;
 
     public String nodeId;
@@ -98,7 +99,7 @@ public class NodeImpl implements Node {
     private void parseCondition(Config config){
         ConditionConfig conditionConfig = JSON.parseObject(config.getValue(), ConditionConfig.class);
         configs.put(config.getName(), conditionConfig);
-        List<String> conditions = (List<String>) configs.computeIfAbsent("<|CONDITIONS|>", k->new ArrayList<>());
+        List<String> conditions = (List<String>) configs.computeIfAbsent(CONDITIONS_FLAG, k->new ArrayList<>());
         conditions.add(config.getName());
     }
 
@@ -115,7 +116,7 @@ public class NodeImpl implements Node {
         // TODO: 容器配置类型的子类型配置解析
         // 在解析节点配置前一定要清空节点的全部配置，否则在循环节点中的节点将出现许多无意义的配置
         if (!configs.isEmpty()) configs.clear();
-        List<String> conditions = (List<String>) configs.computeIfAbsent("<|CONDITIONS|>", k->new ArrayList<>());
+        List<String> conditions = (List<String>) configs.computeIfAbsent(CONDITIONS_FLAG, k->new ArrayList<>());
         if (!conditions.isEmpty()) conditions.clear();
         if(configList == null) return;
         configList.forEach(config->{

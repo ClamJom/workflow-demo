@@ -56,7 +56,7 @@ function onChange(value) {
 <template>
   <div class="select-config">
     <Form layout="vertical">
-      <Form.Item :label="config.des || config.name">
+      <Form.Item :label="config.name">
         <Tooltip :title="config.des">
           <Select
             v-model:value="selectedValue"

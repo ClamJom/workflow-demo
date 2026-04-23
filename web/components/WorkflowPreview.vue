@@ -130,16 +130,16 @@ const selectedNodePool = ref([]);
 const nodeOutputsByTypeCache = new Map();
 
 /**
- * 起始节点：运行时将 Map 配置「input」中每个键写入 nodePool（见 StartNode.run），
  * 变量池应展示各键名，而非后端 getNodeOutputs 里名为 input 的整段 Map。
  * @param {Object} wnode - 节点 data.wnode
  * @returns {Object[]} Map 的键名列表
  */
-function getStartNodeMapKeys(wnode) {
+function getNodeMapKeys(wnode) {
     const configs = wnode?.configs || [];
     return configs.map(item => {
       return {
         name: item["name"],
+        value: item["value"],
         des: item["des"],
         type: item["type"]
       }
@@ -154,7 +154,7 @@ const graphTopologySig = computed(() => {
         const typ = n.data?.wnode?.type ?? '';
         const par = n.parentNode || '';
         if (typ === NODE_TYPE_CODE.START) {
-            const keys = getStartNodeMapKeys(n.data?.wnode).sort().join(',');
+            const keys = getNodeMapKeys(n.data?.wnode).sort().join(',');
             return `${n.id}:${typ}:${par}:${keys}`;
         }
         return `${n.id}:${typ}:${par}`;
@@ -708,7 +708,7 @@ async function appendNodeOutputsToPool(node, pool) {
     if (nodeCode == null) return;
 
     if (nodeCode === NODE_TYPE_CODE.START) {
-        const variables = getStartNodeMapKeys(node.data?.wnode);
+        const variables = getNodeMapKeys(node.data?.wnode);
         variables.forEach((item) => {
             pool.push({
                 name: `${upstreamId}:${item.name}`,
@@ -717,6 +717,27 @@ async function appendNodeOutputsToPool(node, pool) {
             });
         });
         return;
+    }
+
+    if (nodeCode === NODE_TYPE_CODE.VARIABLE_ASSIGN){
+      // 如果节点为注册变量节点，应当直接将变量名注入变量池
+      const variables = getNodeMapKeys(node.data?.wnode);
+      let varName = "";
+      let varType = "";
+      let varDes = "";
+      variables.forEach((item) => {
+        if (item.name === "name") varName = item.value;
+        if (item.name === "value") varType = item.type;
+        if (item.name === "des") varDes = item.value;
+      });
+      if (!varName) return;
+      if(pool.filter((item) => item.name === varName).length !== 0) return;
+      pool.push({
+        name: varName,
+        des: varDes,
+        type: varType
+      });
+      return;
     }
 
     let outputs = nodeOutputsByTypeCache.get(nodeCode);

@@ -26,7 +26,7 @@ public class ConditionNode extends NodeImpl{
 
     @Override
     public void run() {
-        List<String> conditions = (List<String>) configs.computeIfAbsent("<|CONDITIONS|>", k -> new ArrayList<>());
+        List<String> conditions = (List<String>) configs.computeIfAbsent(CONDITIONS_FLAG, k -> new ArrayList<>());
         conditions.forEach(condition->{
             ConditionConfig cc = (ConditionConfig) configs.get(condition);
             Object a = globalPool.parseObject(cc.a, token);
