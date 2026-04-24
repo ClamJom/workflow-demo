@@ -99,7 +99,7 @@ function onSelect(value) {
 <template>
   <div class="number-config">
     <Form layout="vertical">
-      <Form.Item :label="config.des || config.name">
+      <Form.Item :label="config.name">
         <Tooltip :title="`数字或变量；最小: ${config.min ?? '无'}, 最大: ${config.max ?? '无'}。输入 / 可从变量池选择`">
           <AutoComplete
             v-model:value="inputValue"

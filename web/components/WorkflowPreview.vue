@@ -130,16 +130,16 @@ const selectedNodePool = ref([]);
 const nodeOutputsByTypeCache = new Map();
 
 /**
- * 起始节点：运行时将 Map 配置「input」中每个键写入 nodePool（见 StartNode.run），
  * 变量池应展示各键名，而非后端 getNodeOutputs 里名为 input 的整段 Map。
  * @param {Object} wnode - 节点 data.wnode
  * @returns {Object[]} Map 的键名列表
  */
-function getStartNodeMapKeys(wnode) {
+function getNodeMapKeys(wnode) {
     const configs = wnode?.configs || [];
     return configs.map(item => {
       return {
         name: item["name"],
+        value: item["value"],
         des: item["des"],
         type: item["type"]
       }
@@ -154,7 +154,7 @@ const graphTopologySig = computed(() => {
         const typ = n.data?.wnode?.type ?? '';
         const par = n.parentNode || '';
         if (typ === NODE_TYPE_CODE.START) {
-            const keys = getStartNodeMapKeys(n.data?.wnode).sort().join(',');
+            const keys = getNodeMapKeys(n.data?.wnode).sort().join(',');
             return `${n.id}:${typ}:${par}:${keys}`;
         }
         return `${n.id}:${typ}:${par}`;
@@ -478,6 +478,59 @@ function preCheckWorkflow(payload) {
         );
     }
 
+    const nodeById = new Map(nodes.map(n => [n.id, n]));
+    const badBreakPlacement = [];
+    for (const n of nodes) {
+        if (n.type !== NODE_TYPE_CODE.BREAK) continue;
+        if (!hasParent(n)) {
+            badBreakPlacement.push(n.id);
+            continue;
+        }
+        const p = nodeById.get(String(n.parent));
+        const pt = p?.type;
+        if (!p || (pt !== NODE_TYPE_CODE.LOOP && pt !== NODE_TYPE_CODE.WHILE_LOOP)) {
+            badBreakPlacement.push(n.id);
+        }
+    }
+    if (badBreakPlacement.length) {
+        const labels = badBreakPlacement.slice(0, 3).map((id) => {
+            const node = nodes.find(x => x.id === id);
+            return node?.name || id;
+        }).join('、');
+        const more = badBreakPlacement.length > 3 ? ` 等共 ${badBreakPlacement.length} 个` : '';
+        return fail(
+            `跳出节点只能作为循环或条件循环容器的子节点：${labels}${more}`,
+            badBreakPlacement,
+        );
+    }
+
+    const badBreakOut = [];
+    for (const e of edges) {
+        const from = e?.from;
+        const to = e?.to;
+        if (!from || !to) continue;
+        const fromN = nodeById.get(from);
+        const toN = nodeById.get(to);
+        if (!fromN || !toN) continue;
+        if (fromN.type !== NODE_TYPE_CODE.BREAK) continue;
+        if (toN.type !== NODE_TYPE_CODE.END) {
+            badBreakOut.push(from, to);
+            continue;
+        }
+        const fp = hasParent(fromN) ? String(fromN.parent) : '';
+        const tp = hasParent(toN) ? String(toN.parent) : '';
+        if (fp !== tp) {
+            badBreakOut.push(from, to);
+        }
+    }
+    if (badBreakOut.length) {
+        const uniq = [...new Set(badBreakOut)];
+        return fail(
+            '跳出节点的出边只能连接至同一循环容器内的结束节点',
+            uniq,
+        );
+    }
+
     const inDeg = {};
     nodes.forEach((n) => {
         inDeg[n.id] = 0;
@@ -655,7 +708,7 @@ async function appendNodeOutputsToPool(node, pool) {
     if (nodeCode == null) return;
 
     if (nodeCode === NODE_TYPE_CODE.START) {
-        const variables = getStartNodeMapKeys(node.data?.wnode);
+        const variables = getNodeMapKeys(node.data?.wnode);
         variables.forEach((item) => {
             pool.push({
                 name: `${upstreamId}:${item.name}`,
@@ -664,6 +717,27 @@ async function appendNodeOutputsToPool(node, pool) {
             });
         });
         return;
+    }
+
+    if (nodeCode === NODE_TYPE_CODE.VARIABLE_ASSIGN){
+      // 如果节点为注册变量节点，应当直接将变量名注入变量池
+      const variables = getNodeMapKeys(node.data?.wnode);
+      let varName = "";
+      let varType = "";
+      let varDes = "";
+      variables.forEach((item) => {
+        if (item.name === "name") varName = item.value;
+        if (item.name === "value") varType = item.type;
+        if (item.name === "des") varDes = item.value;
+      });
+      if (!varName) return;
+      if(pool.filter((item) => item.name === varName).length !== 0) return;
+      pool.push({
+        name: varName,
+        des: varDes,
+        type: varType
+      });
+      return;
     }
 
     let outputs = nodeOutputsByTypeCache.get(nodeCode);
@@ -842,6 +916,24 @@ function getNestableParentIdForAdd() {
 }
 
 /**
+ * 从当前选中节点沿 parent 链查找最近的循环 / 条件循环容器 id（含选中自身）
+ * @returns {string|null}
+ */
+function getEnclosingLoopParentIdForBreak() {
+    if (!selectedNodeId.value) return null;
+    let cur = findNode(selectedNodeId.value);
+    while (cur) {
+        const t = cur.data?.wnode?.type;
+        if (t === NODE_TYPE_CODE.LOOP || t === NODE_TYPE_CODE.WHILE_LOOP) {
+            return cur.id;
+        }
+        if (!cur.parentNode) return null;
+        cur = findNode(cur.parentNode);
+    }
+    return null;
+}
+
+/**
  * 添加新节点
  * @param {Object} nodeType - 节点类型对象 { code, name, type }
  */
@@ -961,6 +1053,15 @@ function addNode(nodeType) {
                 return;
             }
         }
+    }
+
+    if (code === NODE_TYPE_CODE.BREAK) {
+        const loopPid = getEnclosingLoopParentIdForBreak();
+        if (!loopPid) {
+            message.warning('跳出节点仅允许添加在循环或条件循环容器内（请先选中容器内节点或循环框）');
+            return;
+        }
+        nestParentId = loopPid;
     }
 
     const nodeId = generateUUID();
@@ -1125,6 +1226,11 @@ function onNodeDragStop({node: graphNode, nodes: draggedList}) {
         const targetParent = findDeepestContainingNestable(cx, cy, n.id, nodeList) || '';
         if (targetParent === oldParent) continue;
 
+        if (n.data?.wnode?.type === NODE_TYPE_CODE.BREAK && !targetParent && oldParent) {
+            message.warning('跳出节点不能拖出循环容器外');
+            continue;
+        }
+
         disconnectEdgesForNode(n.id);
 
         let newPos;
@@ -1220,6 +1326,23 @@ onConnect((params) => {
     if (params.source === params.target) {
         message.warning('节点不允许连接到自身');
         return;
+    }
+
+    const srcNode = findNode(params.source);
+    const tgtNode = findNode(params.target);
+    const st = srcNode?.data?.wnode?.type;
+    const tt = tgtNode?.data?.wnode?.type;
+    if (st === NODE_TYPE_CODE.BREAK) {
+        if (tt !== NODE_TYPE_CODE.END) {
+            message.warning('跳出节点的出边只能连接至结束节点');
+            return;
+        }
+        const sp = srcNode.parentNode || '';
+        const tp = tgtNode.parentNode || '';
+        if (sp !== tp) {
+            message.warning('跳出节点只能连接至同一循环容器内的结束节点');
+            return;
+        }
     }
 
     addEdges([{

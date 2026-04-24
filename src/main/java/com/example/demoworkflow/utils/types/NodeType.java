@@ -23,6 +23,7 @@ public enum NodeType {
     LOOP("循环", 0x000007 | NodeType.NESTABLE_FLAG),
     WHILE("条件循环", 0x000008 | NodeType.NESTABLE_FLAG),
     BREAK("循环跳出", 0x000009),
+    VARIABLE_ASSIGN("变量声明", 0x00000A),
     ;
 
     private final String name;
@@ -44,6 +45,7 @@ public enum NodeType {
         nodeClazzMap.put(LOOP.getCode(), LoopNode.class);
         nodeClazzMap.put(WHILE.getCode(), WhileLoopNode.class);
         nodeClazzMap.put(BREAK.getCode(), BreakNode.class);
+        nodeClazzMap.put(VARIABLE_ASSIGN.getCode(), VariableAssignNode.class);
     }
 
     NodeType(String name, int code){

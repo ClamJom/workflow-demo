@@ -8,6 +8,7 @@ import EndNode from './EndNode.vue';
 import WorkNode from './WorkNode.vue';
 import ConditionNode from './ConditionNode.vue';
 import LoopNode from './LoopNode.vue';
+import BreakNode from './BreakNode.vue';
 
 // 用 markRaw 标记组件，防止 Vue 将其变为响应式对象（避免性能警告）
 const StartNodeRaw = markRaw(StartNode);
@@ -15,8 +16,16 @@ const EndNodeRaw = markRaw(EndNode);
 const WorkNodeRaw = markRaw(WorkNode);
 const ConditionNodeRaw = markRaw(ConditionNode);
 const LoopNodeRaw = markRaw(LoopNode);
+const BreakNodeRaw = markRaw(BreakNode);
 
-export { StartNodeRaw as StartNode, EndNodeRaw as EndNode, WorkNodeRaw as WorkNode, ConditionNodeRaw as ConditionNode, LoopNodeRaw as LoopNode };
+export {
+    StartNodeRaw as StartNode,
+    EndNodeRaw as EndNode,
+    WorkNodeRaw as WorkNode,
+    ConditionNodeRaw as ConditionNode,
+    LoopNodeRaw as LoopNode,
+    BreakNodeRaw as BreakNode,
+};
 
 /**
  * 后端 NodeType 枚举 code 值
@@ -31,14 +40,14 @@ export const NODE_TYPE_CODE = {
     HELLO: 0x000003,
     CONDITION: 0x000004,
     HTTP: 0x000005,
-    /** 与 NodeType.LOOP 一致：0x000007 | NESTABLE_FLAG */
     LOOP: 0x000007 | NESTABLE_FLAG,
     WHILE_LOOP: 0x000008 | NESTABLE_FLAG,
     BREAK: 0x000009,
+    VARIABLE_ASSIGN: 0x00000A,
 };
 
 /**
- * 是否为可嵌套容器节点（当前仅 Loop，与后端 NESTABLE_FLAG 一致）
+ * 是否为可嵌套容器节点
  * @param {number} code
  * @returns {boolean}
  */
@@ -62,6 +71,8 @@ export function getVueFlowNodeType(code) {
         case NODE_TYPE_CODE.LOOP:
         case NODE_TYPE_CODE.WHILE_LOOP:
             return 'loop';
+        case NODE_TYPE_CODE.BREAK:
+            return 'break';
         default:
             return 'work';
     }
@@ -76,4 +87,5 @@ export const nodeTypes = {
     work: WorkNode,
     condition: ConditionNode,
     loop: LoopNode,
+    break: BreakNode,
 };

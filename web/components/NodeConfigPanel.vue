@@ -439,6 +439,7 @@ onMounted(() => {
             danger
             class="config-remove"
             @click="removeConfig(config)"
+            v-if="!config.required"
           >
             <DeleteOutlined />
           </Button>

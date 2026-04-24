@@ -62,7 +62,7 @@ function onChange(value) {
     <Form layout="vertical">
       <Row :gutter="8">
         <Col :span="24">
-          <Form.Item :label="config.des || config.name">
+          <Form.Item :label="config.name">
             <Tooltip :title="`范围: ${min} - ${max}`">
               <Slider
                 v-model:value="displayValue"
