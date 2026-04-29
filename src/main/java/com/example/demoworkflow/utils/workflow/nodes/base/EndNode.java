@@ -1,7 +1,8 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
+import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.utils.workflow.result.WorkflowResult;
 import com.example.demoworkflow.utils.workflow.states.NodeStates;
@@ -15,7 +16,7 @@ import java.util.Map;
  * 结束节点。
  * 绝对，绝对，绝对不要在单个流程图中同级添加多个结束节点，这可能导致流程图提前结束！
  */
-public class EndNode extends NodeImpl{
+public class EndNode extends NodeImpl {
 
     public EndNode(GlobalPool globalPool) {
         super(globalPool);

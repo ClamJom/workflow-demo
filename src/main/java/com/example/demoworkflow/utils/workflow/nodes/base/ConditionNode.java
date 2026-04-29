@@ -1,9 +1,9 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.ConditionConfig;
+import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
-import com.example.demoworkflow.utils.workflow.states.NodeStates;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.List;
  * 条件节点
  */
 @Slf4j
-public class ConditionNode extends NodeImpl{
+public class ConditionNode extends NodeImpl {
     public ConditionNode(GlobalPool globalPool) {
         super(globalPool);
         setNodeType(NodeType.CONDITION);

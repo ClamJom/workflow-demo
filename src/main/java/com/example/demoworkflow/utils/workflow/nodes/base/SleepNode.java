@@ -1,13 +1,13 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.example.demoworkflow.utils.types.ConfigTypes;
+import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.vo.ConfigVO;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
-public class SleepNode extends NodeImpl{
+public class SleepNode extends NodeImpl {
     public SleepNode(GlobalPool globalPool) {
         super(globalPool);
     }

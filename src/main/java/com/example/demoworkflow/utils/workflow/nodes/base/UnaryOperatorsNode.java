@@ -1,10 +1,11 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.alibaba.fastjson2.JSON;
 import com.example.demoworkflow.pojo.Config;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.misc.UnaryOperatorHelper;
+import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.vo.ConfigVO;
 
@@ -14,7 +15,7 @@ import java.util.List;
 /**
  * 单目运算符，处理数字、变量的自增、自减、位操作
  */
-public class UnaryOperatorsNode extends NodeImpl{
+public class UnaryOperatorsNode extends NodeImpl {
     public UnaryOperatorsNode(GlobalPool globalPool) {
         super(globalPool);
         setNodeType(NodeType.UNARY_OPERATORS);

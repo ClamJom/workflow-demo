@@ -1,10 +1,11 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.alibaba.fastjson2.JSON;
 import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.handler.SubNodeHandler;
+import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.vo.ConfigVO;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-public class LoopNode extends NodeImpl{
+public class LoopNode extends NodeImpl {
     private final List<Object> outputs = new ArrayList<>();
     public LoopNode(GlobalPool globalPool) {
         super(globalPool);

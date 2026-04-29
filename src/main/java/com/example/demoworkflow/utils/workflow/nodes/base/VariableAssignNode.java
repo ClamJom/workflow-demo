@@ -1,16 +1,16 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.example.demoworkflow.utils.types.NodeType;
+import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.vo.ConfigVO;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 变量声明节点，向变量池声明没有节点ID标识的变量
  */
-public class VariableAssignNode extends NodeImpl{
+public class VariableAssignNode extends NodeImpl {
     public VariableAssignNode(GlobalPool globalPool) {
         super(globalPool);
         setNodeType(NodeType.VARIABLE_ASSIGN);

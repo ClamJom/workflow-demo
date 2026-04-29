@@ -1,9 +1,10 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.alibaba.fastjson2.JSON;
 import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
+import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.utils.workflow.result.WorkflowResult;
 import com.example.demoworkflow.vo.ConfigVO;
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 网络请求节点
  */
-public class HTTPRequestNode extends NodeImpl{
+public class HTTPRequestNode extends NodeImpl {
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko)";

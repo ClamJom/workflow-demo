@@ -152,6 +152,7 @@ public class ResultHandler {
         globalPool.resultHandlerDone(workflow.getToken());
         // 最后清理变量池
         globalPool.deleteAll(token);
+        globalPool.clearWorkflowResults(token);
         sseHandler.close(token);
     }
 }

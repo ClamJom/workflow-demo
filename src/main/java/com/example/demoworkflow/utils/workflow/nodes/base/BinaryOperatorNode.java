@@ -1,9 +1,10 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.alibaba.fastjson2.JSON;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.misc.BinaryOperatorHelper;
+import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.vo.ConfigVO;
 
@@ -13,7 +14,7 @@ import java.util.List;
 /**
  * 双目运算符，处理两个数值、变量之间的算术与位运算
  */
-public class BinaryOperatorNode extends NodeImpl{
+public class BinaryOperatorNode extends NodeImpl {
     public BinaryOperatorNode(GlobalPool globalPool) {
         super(globalPool);
         setNodeType(NodeType.BINARY_OPERATORS);

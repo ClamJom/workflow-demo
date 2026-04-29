@@ -36,12 +36,17 @@ public class SubNodeHandler {
         node.putWorkflowResult(result);
     }
 
+    private boolean isWorkflowExited(String token){
+        return globalPool.getWorkflowState(token) == WorkflowStates.ERROR ||
+                globalPool.getWorkflowState(token) == WorkflowStates.NULL;
+    }
+
     /**
      * 处理运行节点核心运行逻辑前的逻辑，更新节点状态
      * @param node 节点
      */
     private void nodeBefore(NodeImpl node, NodeImpl parentNode){
-        if(globalPool.getWorkflowState(node.getToken()) == WorkflowStates.ERROR) return;
+        if(isWorkflowExited(node.token)) return;
         if(globalPool.getNodeState(node.getToken(), node.nodeId) == NodeStates.DISABLED) return;
         if(node.getNodeType() != NodeType.END && !node.relatedNodes.isEmpty() &&
                 node.relatedNodes.stream().allMatch(pNode ->
@@ -53,6 +58,7 @@ public class SubNodeHandler {
         putNodeState(node, NodeStates.STAND_BY, "加载节点: "+node.nodeId);
         // 如果前置节点没有运行完成，认为当前节点没有就绪
         while(true){
+            if(isWorkflowExited(node.token)) return;
             if(node.relatedNodes.isEmpty()) break;
             if(node.relatedNodes.stream().allMatch(item->{
                 Lock lock = globalPool.redissonClient.getLock(item);
@@ -76,7 +82,7 @@ public class SubNodeHandler {
      * @param node 节点
      */
     private void nodeRun(NodeImpl node, NodeImpl parentNode){
-        if(globalPool.getWorkflowState(node.getToken()) == WorkflowStates.ERROR ||
+        if(isWorkflowExited(node.token) ||
                 globalPool.getBreakSignal(node.getToken(), parentNode.nodeId)) return;
         if(globalPool.getNodeState(node.token, node.nodeId) == NodeStates.DISABLED) return;
         globalPool.nodeRunning(node.token, node.nodeId);
@@ -97,8 +103,7 @@ public class SubNodeHandler {
     }
 
     private void nodeAfter(NodeImpl node, NodeImpl parentNode, CountDownLatch latch){
-        if(globalPool.getWorkflowState(node.getToken()) == WorkflowStates.ERROR ||
-                globalPool.getWorkflowState(node.getToken()) == WorkflowStates.NULL){
+        if(isWorkflowExited(node.token)){
             latch.countDown();
             return;
         }

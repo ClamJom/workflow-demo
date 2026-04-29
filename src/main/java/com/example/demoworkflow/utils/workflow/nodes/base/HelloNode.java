@@ -1,8 +1,9 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
+import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.utils.workflow.result.WorkflowResult;
 import com.example.demoworkflow.utils.workflow.states.WorkflowStates;
@@ -10,7 +11,7 @@ import com.example.demoworkflow.vo.ConfigVO;
 
 import java.util.List;
 
-public class HelloNode extends NodeImpl{
+public class HelloNode extends NodeImpl {
 
     public HelloNode(GlobalPool globalPool) {
         super(globalPool);

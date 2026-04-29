@@ -2,6 +2,7 @@ package com.example.demoworkflow.utils.types;
 
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.nodes.*;
+import com.example.demoworkflow.utils.workflow.nodes.base.*;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.vo.ConfigVO;
 import lombok.Getter;

@@ -143,6 +143,10 @@ public class GlobalPool {
         return resultQueue.poll();
     }
 
+    public void clearWorkflowResults(String token){
+        results.remove(token);
+    }
+
     private String nodeStateKeyFactory(String uuid){
         return "node_state:"+uuid;
     }

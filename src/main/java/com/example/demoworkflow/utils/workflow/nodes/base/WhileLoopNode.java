@@ -1,4 +1,4 @@
-package com.example.demoworkflow.utils.workflow.nodes;
+package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
