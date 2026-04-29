@@ -163,6 +163,38 @@ function mapInitialToConfigs(initial) {
   }));
 }
 
+/**
+ * 节点类型默认配置（接口）与画布已存配置按 name 合并：同名项以实际（initial）字段为准。
+ * 仅存在于 initial、不在默认列表中的项追加到末尾。
+ */
+function mergeDefaultListWithInitialConfigs(defaultList, initial) {
+  if (!initial?.length) return defaultList;
+
+  const initialByName = new Map();
+  for (const item of initial) {
+    if (item?.name != null && item.name !== '') {
+      initialByName.set(item.name, item);
+    }
+  }
+  if (initialByName.size === 0) return defaultList;
+
+  const merged = [];
+  for (const defRow of defaultList) {
+    const act = initialByName.get(defRow.name);
+    if (act) {
+      initialByName.delete(defRow.name);
+      const [fromActual] = mapInitialToConfigs([act]);
+      merged.push({ ...defRow, ...fromActual });
+    } else {
+      merged.push(defRow);
+    }
+  }
+  for (const act of initialByName.values()) {
+    merged.push(...mapInitialToConfigs([act]));
+  }
+  return merged;
+}
+
 function normalizeConfigRows(list) {
   return (list || []).map((c, idx) => ({
     ...c,
@@ -354,6 +386,8 @@ async function loadConfigs() {
 
     if (list.length === 0 && props.initialConfigs?.length > 0) {
       list = mapInitialToConfigs(props.initialConfigs);
+    } else if (list.length > 0 && props.initialConfigs?.length > 0) {
+      list = mergeDefaultListWithInitialConfigs(list, props.initialConfigs);
     }
 
     configs.value = normalizeConfigRows(list);
