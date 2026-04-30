@@ -1,6 +1,7 @@
 package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.alibaba.fastjson2.JSON;
+import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.misc.BinaryOperatorHelper;
@@ -33,14 +34,14 @@ public class BinaryOperatorNode extends NodeImpl {
                 .des("左操作数或变量")
                 .k(1)
                 .quantize(0)
-                .type("Number")
+                .type(ConfigTypes.NUMBER)
                 .build());
         list.add(ConfigVO.builder()
                 .name("right")
                 .des("右操作数或变量")
                 .k(1)
                 .quantize(0)
-                .type("Number")
+                .type(ConfigTypes.NUMBER)
                 .build());
         String[] options = {
                 "+", "-", "*", "/", "%",
@@ -50,7 +51,7 @@ public class BinaryOperatorNode extends NodeImpl {
                 .name("operator")
                 .des("操作符")
                 .value("+")
-                .type("Select")
+                .type(ConfigTypes.SELECT)
                 .options(JSON.toJSONString(options))
                 .required(true)
                 .build());

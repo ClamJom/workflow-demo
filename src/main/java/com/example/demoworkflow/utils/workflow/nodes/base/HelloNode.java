@@ -38,7 +38,7 @@ public class HelloNode extends NodeImpl {
     public List<OutputVariableDes> getNodeOutputs(){
         return List.of(OutputVariableDes.builder()
                         .name("message")
-                        .type("String")
+                        .type(ConfigTypes.STRING)
                         .des("消息")
                 .build());
     }

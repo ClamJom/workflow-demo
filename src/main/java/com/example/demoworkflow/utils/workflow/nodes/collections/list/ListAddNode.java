@@ -1,5 +1,6 @@
 package com.example.demoworkflow.utils.workflow.nodes.collections.list;
 
+import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.misc.ListNodeHelper;
 import com.example.demoworkflow.utils.workflow.misc.PoolVariableRefResolver;
@@ -29,14 +30,14 @@ public class ListAddNode extends NodeImpl {
         return List.of(
                 ConfigVO.builder()
                         .name("list")
-                        .des("列表变量：推荐 {{变量名}}（与快捷插入一致）；也可填字面量池键名")
-                        .type("String")
+                        .des("列表变量；也可填字面量池键名")
+                        .type(ConfigTypes.STRING)
                         .required(true)
                         .build(),
                 ConfigVO.builder()
                         .name("value")
                         .des("要添加的元素")
-                        .type("String")
+                        .type(ConfigTypes.STRING)
                         .required(true)
                         .build());
     }

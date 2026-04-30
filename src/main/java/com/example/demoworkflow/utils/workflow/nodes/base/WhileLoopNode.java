@@ -71,6 +71,11 @@ public class WhileLoopNode extends LoopNode{
         while(checkConditions()){
             if(runCore(timeout, i)) break;
             i++;
+            // 由于依旧存在并发同步问题，while可能出现无限循环，这里手动限制循环次数
+            if(i > 500){
+                globalPool.workflowError(token);
+                break;
+            }
         }
         nodePool.put("output", outputs);
     }

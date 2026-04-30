@@ -1,5 +1,6 @@
 package com.example.demoworkflow.utils.workflow.nodes.collections.list;
 
+import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.misc.ListNodeHelper;
 import com.example.demoworkflow.utils.workflow.misc.PoolVariableRefResolver;
@@ -29,14 +30,14 @@ public class ListIndexSetNode extends NodeImpl {
         return List.of(
                 ConfigVO.builder()
                         .name("list")
-                        .des("列表变量：推荐 {{变量名}}（与快捷插入一致）；也可填字面量池键名")
-                        .type("String")
+                        .des("列表变量；也可填字面量池键名")
+                        .type(ConfigTypes.STRING)
                         .required(true)
                         .build(),
                 ConfigVO.builder()
                         .name("index")
                         .des("下标（从 0 开始）")
-                        .type("Number")
+                        .type(ConfigTypes.NUMBER)
                         .k(1)
                         .quantize(0)
                         .required(true)
@@ -44,7 +45,7 @@ public class ListIndexSetNode extends NodeImpl {
                 ConfigVO.builder()
                         .name("value")
                         .des("新值（可与其它节点输出或模板配合）")
-                        .type("String")
+                        .type(ConfigTypes.STRING)
                         .required(true)
                         .build());
     }

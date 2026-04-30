@@ -25,6 +25,7 @@ public class ConditionNode extends NodeImpl {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void run() {
         List<String> conditions = (List<String>) configs.computeIfAbsent(CONDITIONS_FLAG, k -> new ArrayList<>());
         conditions.forEach(condition->{

@@ -1,5 +1,6 @@
 package com.example.demoworkflow.utils.workflow.nodes.collections.map;
 
+import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.misc.ListNodeHelper;
 import com.example.demoworkflow.utils.workflow.misc.MapNodeHelper;
@@ -31,20 +32,20 @@ public class MapPutNode extends NodeImpl {
         return List.of(
                 ConfigVO.builder()
                         .name("map")
-                        .des("字典变量：推荐 {{变量名}}（与快捷插入一致）；也可填字面量池键名")
-                        .type("String")
+                        .des("字典变量；也可填字面量池键名")
+                        .type(ConfigTypes.STRING)
                         .required(true)
                         .build(),
                 ConfigVO.builder()
                         .name("key")
                         .des("键：支持模板（如 {{键变量}}）或字面量")
-                        .type("String")
+                        .type(ConfigTypes.STRING)
                         .required(true)
                         .build(),
                 ConfigVO.builder()
                         .name("value")
                         .des("值（可与模板或其它节点输出配合）")
-                        .type("String")
+                        .type(ConfigTypes.STRING)
                         .required(true)
                         .build());
     }

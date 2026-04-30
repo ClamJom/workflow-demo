@@ -1,5 +1,6 @@
 package com.example.demoworkflow.utils.workflow.nodes.base;
 
+import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
@@ -33,7 +34,7 @@ public class EndNode extends NodeImpl {
         return List.of(ConfigVO.builder()
                         .des("输出配置")
                         .name("output")
-                        .type("List")
+                        .type(ConfigTypes.LIST)
                         .value("[]")
                         .required(false)
                 .build());
@@ -43,12 +44,13 @@ public class EndNode extends NodeImpl {
     public List<OutputVariableDes> getNodeOutputs(){
         return List.of(OutputVariableDes.builder()
                         .name("output")
-                        .type("Map")
+                        .type(ConfigTypes.MAP)
                         .des("工作流输出")
                 .build());
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void run() {
         // 读取配置中需要输出的变量
         Object outputObj = configs.get("output");

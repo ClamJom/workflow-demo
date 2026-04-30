@@ -1,5 +1,6 @@
 package com.example.demoworkflow.utils.workflow.nodes.base;
 
+import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.nodes.NodeImpl;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
@@ -26,14 +27,14 @@ public class VariableAssignNode extends NodeImpl {
         return List.of(ConfigVO.builder()
                 .name("name")
                 .des("变量名")
-                .type("String")
+                .type(ConfigTypes.STRING)
                 .required(true)
                 .build(),
         ConfigVO.builder()
                 .name("value")
                 .des("初始值")
                 .value("0")
-                .type("String")
+                .type(ConfigTypes.STRING)
                 .build());
     }
 

@@ -124,6 +124,7 @@ public class HTTPRequestNode extends NodeImpl {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void before(){
         String url = (String) configs.get("Url");
         String uri = (String) configs.get("Uri");

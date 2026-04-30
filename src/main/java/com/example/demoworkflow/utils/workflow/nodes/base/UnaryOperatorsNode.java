@@ -2,6 +2,7 @@ package com.example.demoworkflow.utils.workflow.nodes.base;
 
 import com.alibaba.fastjson2.JSON;
 import com.example.demoworkflow.pojo.Config;
+import com.example.demoworkflow.utils.types.ConfigTypes;
 import com.example.demoworkflow.utils.types.NodeType;
 import com.example.demoworkflow.utils.workflow.dto.OutputVariableDes;
 import com.example.demoworkflow.utils.workflow.misc.UnaryOperatorHelper;
@@ -34,14 +35,14 @@ public class UnaryOperatorsNode extends NodeImpl {
                         .des("值或变量")
                         .k(1)
                         .quantize(0)
-                        .type("Number")
+                        .type(ConfigTypes.NUMBER)
                 .build());
         String[] options = {"++", "--", "~"};
         configs.add(ConfigVO.builder()
                         .name("operator")
                         .des("操作符")
                         .value("++")
-                        .type("Select")
+                        .type(ConfigTypes.SELECT)
                         .options(JSON.toJSONString(options))
                         .required(true)
                 .build());
