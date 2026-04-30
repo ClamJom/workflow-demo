@@ -69,6 +69,7 @@ public class LoopNode extends NodeImpl {
         Set<String> nodeIds = new HashSet<>();
         Queue<NodeImpl> stack = new LinkedList<>();
         stack.add(subStartNode);
+        nodeIds.add(subStartNode.nodeId);
         while (!stack.isEmpty()){
             NodeImpl node = stack.poll();
             node.nextNodes.forEach(n -> {
@@ -115,14 +116,16 @@ public class LoopNode extends NodeImpl {
 
     @Override
     public void before(){
+        if(subStartNode == null || subEndNode == null){
+            onNodeError("子流程的起始节点与结束节点不允许为空！");
+            return;
+        }
         globalPool.deleteBreakSignal(token, nodeId);
         clearNodeStates();
     }
 
     @Override
     public void run(){
-        assert subStartNode != null;
-        assert subEndNode != null;
         Integer loop = (Integer) configs.get("loop");
         Integer timeout = (Integer) configs.get("timeout");
         if (timeout == null) timeout = 0;

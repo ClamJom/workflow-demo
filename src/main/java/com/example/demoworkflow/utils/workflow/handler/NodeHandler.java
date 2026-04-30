@@ -51,7 +51,7 @@ public class NodeHandler {
      * 处理运行节点核心运行逻辑前的逻辑，更新节点状态
      * @param node 节点
      */
-    private void nodeBefore(NodeImpl node){
+    private void nodeBefore(NodeImpl node) throws InterruptedException {
         if(isWorkflowExited(node.token)) return;
         if(globalPool.getNodeState(node.getToken(), node.nodeId) == NodeStates.DISABLED) return;
         if(node.getNodeType() != NodeType.END && !node.relatedNodes.isEmpty() &&
@@ -60,16 +60,26 @@ public class NodeHandler {
             globalPool.nodeDisabled(node.token, node.nodeId);
             return;
         }
-        globalPool.initNodeState(node.token, node.nodeId);
-        putNodeState(node, NodeStates.STAND_BY, "加载节点: "+node.nodeId);
+        Lock plock = redissonClient.getLock(node.nodeId);
+        plock.lock();
+        try {
+            if(globalPool.getNodeState(node.getToken(), node.nodeId) != NodeStates.NULL){
+                Thread.currentThread().interrupt();
+                return;
+            }
+            globalPool.initNodeState(node.token, node.nodeId);
+            putNodeState(node, NodeStates.STAND_BY, "加载节点: " + node.nodeId);
+        }finally {
+            plock.unlock();
+        }
         // 如果前置节点没有运行完成，认为当前节点没有就绪
         while(true){
             if(isWorkflowExited(node.token)) return;
             if(node.relatedNodes.isEmpty()) break;
             if(node.relatedNodes.stream().allMatch(item->{
                 Lock lock = redissonClient.getLock(item);
+                lock.lock();
                 try {
-                    lock.lock();
                     int pNodeState = globalPool.getNodeState(node.token, item);
                     if (pNodeState == NodeStates.NULL) return false;
                     return (pNodeState & NodeStates.DONE) != 0 || (pNodeState & NodeStates.DISABLED) != 0;
@@ -77,6 +87,7 @@ public class NodeHandler {
                     lock.unlock();
                 }
             })) break;
+            Thread.sleep(10);
         }
         node.parseConfig(node.configList);
         node.before();
@@ -100,8 +111,8 @@ public class NodeHandler {
      */
     private void handlerNextNode(NodeImpl node){
         Lock lock = redissonClient.getLock(node.nodeId);
+        lock.lock();
         try{
-            lock.lock();
             int nextNodeState = globalPool.getNodeState(node.token, node.nodeId);
             // 即便Disabled，也要运行节点。NodeHandler会自动跳过这些节点的核心功能。
             // 如果不这么做，那么远端的节点状态永远为NULL，会使得依赖这些节点的节点陷入永恒等待。
@@ -152,9 +163,12 @@ public class NodeHandler {
     public void run(NodeImpl node){
         try{
             nodeBefore(node);
+            if(Thread.interrupted()) return;
             nodeRun(node);
             nodeAfter(node);
-        }catch(Exception e){
+        }
+        catch(Exception e){
+            if(Thread.interrupted()) return;
             nodeError(node, e);
         }
     }

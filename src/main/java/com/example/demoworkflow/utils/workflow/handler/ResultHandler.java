@@ -118,11 +118,12 @@ public class ResultHandler {
         globalPool.deleteAll(token);
     }
 
-    private void handler(Workflow workflow, SseHandler sseHandler){
+    private void handler(Workflow workflow, SseHandler sseHandler) throws InterruptedException {
         globalPool.resultHandlerRunning(workflow.getToken());
         String token = workflow.getToken();
         long updateTime = System.currentTimeMillis();
         while(true){
+            // 这里的IO十分密集，所以不使用Thread.sleep（会严重拖缓运行，从前端看返回的结果需要很久才出现）
             WorkflowResult result = globalPool.pollWorkflowResult(token);
             if(workflow.isEnded() && result == null){
                 globalPool.pushWorkflowResult(token, WorkflowResult.builder()
@@ -147,6 +148,7 @@ public class ResultHandler {
             WorkflowResult result = globalPool.pollWorkflowResult(token);
             if(result == null) break;
             sseHandler.send(workflow.getToken(), JSON.toJSONString(result));
+            Thread.sleep(10);
         }
         // 没有意义。实际上写入后马上就会被删除，此处保留
         globalPool.resultHandlerDone(workflow.getToken());

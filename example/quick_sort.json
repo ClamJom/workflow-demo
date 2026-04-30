@@ -206,11 +206,6 @@
 			"to":"hjkhuvb51ckol"
 		},
 		{
-			"from":"21fcc1eia39st",
-			"fromHandle":"source",
-			"to":"0rp4bh4z3u4jg"
-		},
-		{
 			"from":"0rp4bh4z3u4jg",
 			"fromHandle":"source",
 			"to":"3clhl5o4tgl2e"
@@ -274,6 +269,16 @@
 			"from":"ovzq6f43y67si",
 			"fromHandle":"source",
 			"to":"a93zz92jjpinl"
+		},
+		{
+			"from":"01zaf93upnbij",
+			"fromHandle":"source",
+			"to":"0rp4bh4z3u4jg"
+		},
+		{
+			"from":"21fcc1eia39st",
+			"fromHandle":"source",
+			"to":"furu4kf306rp"
 		}
 	],
 	"name":"快速排序",
@@ -291,7 +296,7 @@
 					"quantize":0,
 					"required":false,
 					"type":"List",
-					"value":"[\"4\",\"3\",\"9\",\"6\",\"2\",\"8\",\"5\",\"1\",\"7\"]"
+					"value":"[\"4\",\"11\",\"9\",\"6\",\"2\",\"8\",\"5\",\"1\",\"7\",\"3\"]"
 				}
 			],
 			"id":"cy53991f8iu85",
@@ -687,7 +692,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"chn1f22khdtre",
 			"name":"获取数组长",
@@ -704,7 +709,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"6d6bkrm7rq5cn",
 			"name":"初始化栈",
@@ -721,7 +726,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"jg1rjhgrae5oe",
 			"name":"常量0的定义",
@@ -738,7 +743,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"yytmlyxj19fg",
 			"name":"初始化栈长",
@@ -755,7 +760,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"e3xm9g2oush4m",
 			"name":"输出结果",
@@ -772,7 +777,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"v86nu669mq9l7",
 			"name":"等价的Python代码：\n```python\ndef quick_sort(arr: list):\n    stack = []\n    stack.append((0, len(arr) - 1))\n    while len(stack) != 0:\n        low, high = stack.pop()\n        if low >= high:\n            continue\n        pivot = arr[high]\n        i = low - 1\n        for j in range(low, high):\n            if arr[j] <= pivot:\n                i += 1\n                arr[i], arr[j] = arr[j], arr[i]\n        arr[i + 1], arr[high] = arr[high], arr[i + 1]\n        stack.append((low, i))\n        stack.append((i + 2, high))\n    return arr\n```",
@@ -929,7 +934,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"w96nosxi87qc",
 			"name":"列表拷贝",
@@ -975,7 +980,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"1qm2vdzhflnq",
 			"name":"开始",
@@ -992,7 +997,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"a93zz92jjpinl",
 			"name":"结束",
@@ -1430,7 +1435,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"l4nbcn51ukkdh",
 			"name":"这一块模拟出栈操作，并更新栈长",
@@ -1447,7 +1452,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"g8872cpqv09db",
 			"name":"将高位作为哨兵节点",
@@ -1660,7 +1665,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"oyj8fw7mufh0b",
 			"name":"获取从高位到低位需要循环的次数",
@@ -1859,7 +1864,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"2k6aj13x02wjc",
 			"name":"更新栈并更新栈大小",
@@ -2155,7 +2160,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"264v88aiucf7b",
 			"name":"最后a[i+1]与a[high]互换",
@@ -2172,7 +2177,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"t2i6ul9d0ubh",
 			"name":"开始",
@@ -2189,7 +2194,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"9mjw8saonpiaf",
 			"name":"结束",
@@ -2290,7 +2295,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"siyjy5keslill",
 			"name":"开始",
@@ -2307,7 +2312,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"0qgzr1y1h6par",
 			"name":"结束",
@@ -2464,7 +2469,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"ksiwq2tm1blm",
 			"name":"获取a[j]并与哨兵比较",
@@ -2747,7 +2752,7 @@
 		},
 		{
 			"configs":[
-				
+
 			],
 			"id":"34zga8r50zfda",
 			"name":"如果a[j]比哨兵小，则a[i]，a[j]互换",

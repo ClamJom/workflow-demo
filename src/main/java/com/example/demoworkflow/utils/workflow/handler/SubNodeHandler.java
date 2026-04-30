@@ -6,6 +6,7 @@ import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.utils.workflow.result.WorkflowResult;
 import com.example.demoworkflow.utils.workflow.states.NodeStates;
 import com.example.demoworkflow.utils.workflow.states.WorkflowStates;
+import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 
@@ -54,8 +55,18 @@ public class SubNodeHandler {
             globalPool.nodeDisabled(node.token, node.nodeId);
             return;
         }
-        globalPool.initNodeState(node.token, node.nodeId);
-        putNodeState(node, NodeStates.STAND_BY, "加载节点: "+node.nodeId);
+        Lock plock = globalPool.redissonClient.getLock(node.nodeId);
+        plock.lock();
+        try {
+            if (globalPool.getNodeState(node.getToken(), node.nodeId) != NodeStates.NULL){
+                Thread.currentThread().interrupt();
+                return;
+            }
+            globalPool.initNodeState(node.token, node.nodeId);
+            putNodeState(node, NodeStates.STAND_BY, "加载节点: " + node.nodeId);
+        }finally {
+            plock.unlock();
+        }
         // 如果前置节点没有运行完成，认为当前节点没有就绪
         while(true){
             if(isWorkflowExited(node.token)) return;
@@ -154,9 +165,11 @@ public class SubNodeHandler {
     public void run(NodeImpl node, NodeImpl parentNode, CountDownLatch latch){
         try{
             nodeBefore(node, parentNode);
+            if (Thread.interrupted()) return;
             nodeRun(node, parentNode);
             nodeAfter(node, parentNode, latch);
         }catch(Exception e){
+            if (Thread.interrupted()) return;
             nodeError(node, e);
             latch.countDown();
         }

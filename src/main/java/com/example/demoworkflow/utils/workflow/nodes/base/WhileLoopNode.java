@@ -63,8 +63,6 @@ public class WhileLoopNode extends LoopNode{
 
     @Override
     public void run(){
-        assert subStartNode != null;
-        assert subEndNode != null;
         Integer timeout = (Integer) configs.get("timeout");
         if (timeout == null) timeout = 0;
         int i = 0;
