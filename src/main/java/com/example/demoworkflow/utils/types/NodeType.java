@@ -5,6 +5,7 @@ import com.example.demoworkflow.utils.workflow.nodes.*;
 import com.example.demoworkflow.utils.workflow.nodes.base.*;
 import com.example.demoworkflow.utils.workflow.nodes.collections.list.*;
 import com.example.demoworkflow.utils.workflow.nodes.collections.map.*;
+import com.example.demoworkflow.utils.workflow.nodes.collections.queue.*;
 import com.example.demoworkflow.utils.workflow.pool.GlobalPool;
 import com.example.demoworkflow.vo.ConfigVO;
 import lombok.Getter;
@@ -38,6 +39,13 @@ public enum NodeType {
     MAP_GET("字典查询", 0x000013),
     MAP_PUT("字典写入", 0x000014),
     MAP_REMOVE("字典删键", 0x000015),
+    MAP_CONTAINS("字典包含", 0x000016),
+    // 队列
+    QUEUE_PEEK("队列查询", 0x000017),
+    QUEUE_PUSH("队列添加元素", 0x000018),
+    QUEUE_POP("队列弹出", 0x000019),
+    QUEUE_SIZE("队列长度", 0x00001A),
+    QUEUE_CLEAR("队列清空", 0x00001B),
     ;
 
     private final String name;
@@ -71,6 +79,12 @@ public enum NodeType {
         nodeClazzMap.put(MAP_GET.getCode(), MapGetNode.class);
         nodeClazzMap.put(MAP_PUT.getCode(), MapPutNode.class);
         nodeClazzMap.put(MAP_REMOVE.getCode(), MapRemoveNode.class);
+        nodeClazzMap.put(MAP_CONTAINS.getCode(), MapContainsNode.class);
+        nodeClazzMap.put(QUEUE_PEEK.getCode(), QueuePeekNode.class);
+        nodeClazzMap.put(QUEUE_PUSH.getCode(), QueueAddNode.class);
+        nodeClazzMap.put(QUEUE_POP.getCode(), QueuePopNode.class);
+        nodeClazzMap.put(QUEUE_SIZE.getCode(), QueueSizeNode.class);
+        nodeClazzMap.put(QUEUE_CLEAR.getCode(), QueueClearNode.class);
     }
 
     NodeType(String name, int code){

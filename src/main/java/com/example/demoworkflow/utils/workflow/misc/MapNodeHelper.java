@@ -49,18 +49,4 @@ public class MapNodeHelper {
         }
         return next;
     }
-
-    /**
-     * 读取用于写入：变量不存在时得到空字典；存在但非 Map 则抛错。
-     */
-    public static Map<String, Object> readMapForWrite(GlobalPool globalPool, String token, String mapVarName) {
-        Object raw = globalPool.get(token, mapVarName);
-        if (raw == null) {
-            return new LinkedHashMap<>();
-        }
-        if (!(raw instanceof Map)) {
-            throw new IllegalArgumentException("变量不是字典类型: " + mapVarName);
-        }
-        return mutableCopy((Map<?, ?>) raw);
-    }
 }

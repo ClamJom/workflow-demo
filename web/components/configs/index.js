@@ -5,6 +5,7 @@
 import MapConfig from './MapConfig.vue';
 import NumberConfig from './NumberConfig.vue';
 import ListConfig from './ListConfig.vue';
+import QueueConfig from './QueueConfig.vue';
 import StringConfig from './StringConfig.vue';
 import ConditionConfig from './ConditionConfig.vue';
 import BooleanConfig from './BooleanConfig.vue';
@@ -15,6 +16,7 @@ export {
     MapConfig,
     NumberConfig,
     ListConfig,
+    QueueConfig,
     StringConfig,
     ConditionConfig,
     BooleanConfig,
@@ -31,6 +33,7 @@ const configComponentMap = {
     'String': StringConfig,
     'Boolean': BooleanConfig,
     'List': ListConfig,
+    'Queue': QueueConfig,
     'Map': MapConfig,
     'Condition': ConditionConfig,
     'Select': SelectConfig,
@@ -74,6 +77,7 @@ export function parseConfig(configs){
                 break;
             case "Map":
             case "List":
+            case "Queue":
                 config[item.name] = JSON.parse(item.value);
                 break;
             case "Condition": {

@@ -57,6 +57,8 @@ const errorMsg = ref('');
 
 /** 条件节点 code，与 NodeType.CONDITION 一致 */
 const CONDITION_NODE_CODE = 0x000004;
+/** 变量声明|赋值节点 code，与 NodeType.VARIABLE_ASSIGN 一致 */
+const VARIABLE_ASSIGN_NODE_CODE = 0x00000A;
 
 /** 单条 Condition 配置 value，与后端 ConditionConfig JSON 一致（非数组） */
 const DEFAULT_CONDITION_JSON = JSON.stringify({
@@ -72,6 +74,7 @@ const CONFIG_TYPE_OPTIONS = [
   { value: 'Number', label: '数字 Number' },
   { value: 'Boolean', label: '布尔 Boolean' },
   { value: 'List', label: '列表 List' },
+  { value: 'Queue', label: '队列 Queue' },
   { value: 'Map', label: '键值对 Map' },
   { value: 'Condition', label: '条件 Condition' },
   { value: 'Select', label: '下拉 Select' },
@@ -127,6 +130,12 @@ const showPendingNumberRangeFields = computed(
   () => pendingType.value === 'Number' || pendingType.value === 'Slider'
 );
 
+const variableAssignValueTypeOptions = computed(() =>
+  CONFIG_TYPE_OPTIONS.filter(o =>
+    ['String', 'Number', 'Boolean', 'List', 'Queue', 'Map'].includes(o.value)
+  )
+);
+
 function defaultValueForType(type) {
   switch (type) {
     case 'Boolean':
@@ -135,6 +144,7 @@ function defaultValueForType(type) {
     case 'Slider':
       return '0';
     case 'List':
+    case 'Queue':
       return '[]';
     case 'Map':
       return '{}';
@@ -238,7 +248,7 @@ function isConfigVisible(config) {
 }
 
 function needsPool(type) {
-  return type === 'String' || type === 'Number' || type === 'Condition' || type === 'Map' || type === 'List';
+  return type === 'String' || type === 'Number' || type === 'Condition' || type === 'Map' || type === 'List' || type === 'Queue';
 }
 
 function poolPropsFor(type) {
@@ -251,6 +261,16 @@ function poolPropsFor(type) {
 
 function onConfigValueChange(configName, newValue) {
   configValues[configName] = newValue;
+}
+
+function onConfigTypeChange(config, type) {
+  config.type = type;
+  config.value = defaultValueForType(type);
+  configValues[config.name] = config.value;
+}
+
+function canChangeConfigType(config) {
+  return props.nodeCode === VARIABLE_ASSIGN_NODE_CODE && config.name === 'value';
 }
 
 function emitConfigsChange() {
@@ -315,7 +335,7 @@ function addPendingConfig() {
 
   if (
     trimmedCustomValue !== '' &&
-    (type === 'List' || type === 'Map' || type === 'Condition')
+    (type === 'List' || type === 'Queue' || type === 'Map' || type === 'Condition')
   ) {
     try {
       JSON.parse(trimmedCustomValue);
@@ -466,7 +486,15 @@ onMounted(() => {
       >
         <div class="config-row-head">
           <span class="config-meta">{{ config.des || config.name }}</span>
-          <span class="config-type-tag">{{ config.type }}</span>
+          <Select
+            v-if="canChangeConfigType(config)"
+            :value="config.type"
+            :options="variableAssignValueTypeOptions"
+            size="small"
+            class="config-type-select"
+            @change="(type) => onConfigTypeChange(config, type)"
+          />
+          <span v-else class="config-type-tag">{{ config.type }}</span>
           <Button
             type="text"
             size="small"
@@ -695,6 +723,11 @@ onMounted(() => {
   background: #e6f4ff;
   padding: 0 6px;
   border-radius: 4px;
+}
+
+.config-type-select {
+  width: 132px;
+  flex-shrink: 0;
 }
 
 .config-remove {
