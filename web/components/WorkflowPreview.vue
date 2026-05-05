@@ -27,7 +27,15 @@ import {
     PlayCircleOutlined,
 } from '@ant-design/icons-vue';
 
-import {nodeTypes, getVueFlowNodeType, NODE_TYPE_CODE, NESTABLE_FLAG, isNestableNodeType, isCommentNodeType} from './nodes/index.js';
+import {
+    nodeTypes,
+    getVueFlowNodeType,
+    getNodeDisplayName,
+    NODE_TYPE_CODE,
+    NESTABLE_FLAG,
+    isNestableNodeType,
+    isCommentNodeType,
+} from './nodes/index.js';
 import NodeConfigPanel from './NodeConfigPanel.vue';
 import {autoLayoutVueFlowNested, NODE_WIDTH, NODE_HEIGHT} from '../utils/layout.js';
 import api from '../api/index.js';
@@ -276,6 +284,13 @@ function sortVueFlowNodesParentFirst(nodes) {
     return [...roots, ...childs];
 }
 
+function normalizeLoadedNodeName(node) {
+    if (node?.type === NODE_TYPE_CODE.HELLO && (!node.name || node.name === '问候')) {
+        return getNodeDisplayName({code: node.type, name: node.name});
+    }
+    return node?.name || '';
+}
+
 /**
  * 将后端 WorkflowVO 转换为 Vue-Flow 格式
  * @param {Object} workflowVO - 后端返回的工作流数据
@@ -291,6 +306,7 @@ function castToVueFlow(workflowVO, direction) {
 
     let vfNodes = wnodes.map(n => {
         const raw = {...n};
+        raw.name = normalizeLoadedNodeName(n);
         const nodeStyle = raw.style;
         delete raw.style;
         delete raw.position;
@@ -299,7 +315,7 @@ function castToVueFlow(workflowVO, direction) {
             type: getVueFlowNodeType(n.type),
             position: n.position || {x: 0, y: 0},
             data: {wnode: raw},
-            label: n.name || '',
+            label: raw.name,
             parentNode: n.parent || '',
             ...(nodeStyle && typeof nodeStyle === 'object' ? {style: nodeStyle} : {}),
         };
@@ -947,9 +963,10 @@ async function loadNodeTypes() {
     try {
         const res = await api.workflow.getNodeTypes();
         const list = res.data || [];
-        nodeTypeList.value = list.map((nt) =>
-            nt?.code === NODE_TYPE_CODE.COMMENT ? {...nt, name: '注释'} : nt,
-        );
+        nodeTypeList.value = list.map((nt) => ({
+            ...nt,
+            name: nt?.code === NODE_TYPE_CODE.COMMENT ? '注释' : getNodeDisplayName(nt),
+        }));
     } catch (err) {
         console.error('[WorkflowPreview] 加载节点类型失败', err);
         nodeTypeList.value = [];

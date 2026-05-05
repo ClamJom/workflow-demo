@@ -17,4 +17,6 @@ public class ConfigTypes {
     public static final String SELECT = "Select";
     /** 滑块，同数字 **/
     public static final String SLIDER = "Slider";
+    /** 队列 **/
+    public static final String QUEUE = "Queue";
 }

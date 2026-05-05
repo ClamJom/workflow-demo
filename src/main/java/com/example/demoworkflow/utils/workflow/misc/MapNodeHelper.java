@@ -51,12 +51,12 @@ public class MapNodeHelper {
     }
 
     /**
-     * 读取用于写入：变量不存在时得到空字典；存在但非 Map 则抛错。
+     * 读取用于写入：变量不存在时抛出空指针异常；存在但非 Map 则抛错。
      */
     public static Map<String, Object> readMapForWrite(GlobalPool globalPool, String token, String mapVarName) {
         Object raw = globalPool.get(token, mapVarName);
         if (raw == null) {
-            return new LinkedHashMap<>();
+            throw new NullPointerException("字典变量不存在: " + mapVarName);
         }
         if (!(raw instanceof Map)) {
             throw new IllegalArgumentException("变量不是字典类型: " + mapVarName);
