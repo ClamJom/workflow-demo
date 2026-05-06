@@ -48,9 +48,11 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['configs-change']);
+const emit = defineEmits(['configs-change', 'node-name-change']);
 
 const configs = ref([]);
+
+const editableName = ref('');
 const configValues = reactive({});
 const loading = ref(false);
 const errorMsg = ref('');
@@ -265,6 +267,10 @@ function emitConfigsChange() {
 }
 
 function saveConfigs() {
+  const newName = editableName.value.trim();
+  if (newName && newName !== props.nodeName) {
+    emit('node-name-change', newName);
+  }
   emitConfigsChange();
   message.success('配置已保存到节点');
 }
@@ -407,6 +413,10 @@ watch(() => props.nodeCode, (newCode) => {
   }
 }, { immediate: false });
 
+watch(() => props.nodeName, (val) => {
+  editableName.value = val || '';
+}, { immediate: true });
+
 watch(() => props.initialConfigs, () => {
   if (configs.value.length > 0) {
     initConfigValues();
@@ -421,8 +431,16 @@ onMounted(() => {
 
 <template>
   <div class="node-config-panel">
-    <div v-if="nodeName || nodeId" class="node-config-meta">
-      <span class="node-config-name">{{ nodeName || '节点' }}</span>
+    <div v-if="nodeName !== undefined || nodeId" class="node-config-meta">
+      <div class="node-config-name-row">
+        <span class="node-config-label">节点名称</span>
+        <Input
+          v-model:value="editableName"
+          size="small"
+          placeholder="输入节点名称"
+          class="node-name-input"
+        />
+      </div>
       <code v-if="nodeId" class="node-config-id" :title="nodeId">{{ nodeId }}</code>
     </div>
     <div class="node-config-save-row">
@@ -617,16 +635,28 @@ onMounted(() => {
 
 .node-config-meta {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   margin-bottom: 10px;
   font-size: 13px;
 }
 
-.node-config-name {
-  font-weight: 600;
-  color: #262626;
+.node-config-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-config-label {
+  font-size: 12px;
+  color: #595959;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.node-name-input {
+  flex: 1;
+  min-width: 0;
 }
 
 .node-config-id {
@@ -637,6 +667,7 @@ onMounted(() => {
   border-radius: 4px;
   max-width: 100%;
   word-break: break-all;
+  align-self: flex-start;
 }
 
 .node-config-save-row {

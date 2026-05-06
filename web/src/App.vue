@@ -14,6 +14,8 @@ import {
     PlusOutlined,
     DeleteOutlined,
     FileTextOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
 } from "@ant-design/icons-vue";
 import {onMounted, ref} from "vue";
 import api from "../api";
@@ -31,6 +33,9 @@ const currentUUID = ref(null);
 const listLoading = ref(false);
 /** 新建工作流加载状态 */
 const creating = ref(false);
+
+/** 左侧边栏折叠状态 */
+const siderCollapsed = ref(false);
 
 /**
  * 子组件保存工作流成功后刷新左侧列表名称
@@ -141,67 +146,87 @@ onMounted(() => {
 <template>
   <Layout class="app-layout">
     <!-- 左侧工作流列表 -->
-    <LayoutSider class="sider" :width="220" theme="light">
-      <div class="sider-header">
-        <span class="sider-title">工作流</span>
-        <Tooltip title="新建工作流">
-          <Button
-            type="primary"
-            size="small"
-            shape="circle"
-            :loading="creating"
-            @click="handleNewWorkflow"
-          >
-            <template #icon><PlusOutlined /></template>
-          </Button>
-        </Tooltip>
-      </div>
-
-      <div class="sider-body">
-        <Spin :spinning="listLoading">
-          <!-- 空状态 -->
-          <Empty
-            v-if="!listLoading && workflows.length === 0"
-            :image="Empty.PRESENTED_IMAGE_SIMPLE"
-            description="暂无工作流"
-            class="empty-tip"
-          />
-
-          <!-- 工作流列表 -->
-          <ul v-else class="workflow-list">
-            <li
-              v-for="workflow in workflows"
-              :key="workflow.uuid"
-              class="workflow-item"
-              :class="{ active: currentUUID === workflow.uuid }"
-              @click="handleWorkflowClicked(workflow.uuid)"
+    <LayoutSider
+      v-model:collapsed="siderCollapsed"
+      :collapsed-width="0"
+      :width="220"
+      :collapsible="true"
+      :trigger="null"
+      theme="light"
+      class="sider"
+    >
+      <template #default>
+        <div class="sider-header">
+          <span class="sider-title">工作流</span>
+          <Tooltip title="新建工作流">
+            <Button
+              type="primary"
+              size="small"
+              shape="circle"
+              :loading="creating"
+              @click="handleNewWorkflow"
             >
-              <FileTextOutlined class="item-icon" />
-              <span class="item-name" :title="workflow.name || '未命名工作流'">
-                {{ workflow.name || '未命名工作流' }}
-              </span>
-              <Popconfirm
-                title="确认删除该工作流？"
-                ok-text="删除"
-                cancel-text="取消"
-                ok-type="danger"
-                @confirm.stop="handleDeleteWorkflow(workflow.uuid)"
+              <template #icon><PlusOutlined /></template>
+            </Button>
+          </Tooltip>
+        </div>
+
+        <div class="sider-body">
+          <Spin :spinning="listLoading">
+            <!-- 空状态 -->
+            <Empty
+              v-if="!listLoading && workflows.length === 0"
+              :image="Empty.PRESENTED_IMAGE_SIMPLE"
+              description="暂无工作流"
+              class="empty-tip"
+            />
+
+            <!-- 工作流列表 -->
+            <ul v-else class="workflow-list">
+              <li
+                v-for="workflow in workflows"
+                :key="workflow.uuid"
+                class="workflow-item"
+                :class="{ active: currentUUID === workflow.uuid }"
+                @click="handleWorkflowClicked(workflow.uuid)"
               >
-                <Button
-                  type="text"
-                  size="small"
-                  danger
-                  class="delete-btn"
-                  @click.stop
+                <FileTextOutlined class="item-icon" />
+                <span class="item-name" :title="workflow.name || '未命名工作流'">
+                  {{ workflow.name || '未命名工作流' }}
+                </span>
+                <Popconfirm
+                  title="确认删除该工作流？"
+                  ok-text="删除"
+                  cancel-text="取消"
+                  ok-type="danger"
+                  @confirm.stop="handleDeleteWorkflow(workflow.uuid)"
                 >
-                  <template #icon><DeleteOutlined /></template>
-                </Button>
-              </Popconfirm>
-            </li>
-          </ul>
-        </Spin>
-      </div>
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    class="delete-btn"
+                    @click.stop
+                  >
+                    <template #icon><DeleteOutlined /></template>
+                  </Button>
+                </Popconfirm>
+              </li>
+            </ul>
+          </Spin>
+        </div>
+      </template>
     </LayoutSider>
+
+    <!-- 侧栏折叠切换按钮（浮在边界上） -->
+    <div
+      class="sider-toggle-wrap"
+      :style="{ left: siderCollapsed ? '0' : '220px' }"
+      @click="siderCollapsed = !siderCollapsed"
+    >
+      <MenuFoldOutlined v-if="!siderCollapsed" />
+      <MenuUnfoldOutlined v-else />
+    </div>
 
     <!-- 右侧工作流预览/编辑区 -->
     <LayoutContent class="content">
@@ -230,13 +255,16 @@ onMounted(() => {
   width: 100%;
   height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
 /* ── 左侧边栏 ── */
 .sider {
-  display: flex;
-  flex-direction: column;
   border-right: 1px solid #f0f0f0;
+}
+
+.sider.ant-layout-sider-collapsed {
+  border-right: none;
   overflow: hidden;
 }
 
@@ -338,5 +366,32 @@ onMounted(() => {
 .preview {
   width: 100%;
   height: 100%;
+}
+
+/* ── 侧栏折叠切换按钮 ── */
+.sider-toggle-wrap {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 20px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  color: #8c8c8c;
+  font-size: 12px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.sider-toggle-wrap:hover {
+  color: #1677ff;
+  background: #f0f5ff;
 }
 </style>

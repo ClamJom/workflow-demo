@@ -13,8 +13,7 @@ import {
   message,
   Tooltip,
   Divider,
-  Dropdown,
-  Menu,
+  Select,
   Input,
   Switch,
   Form,
@@ -101,6 +100,21 @@ const addNodeMenuList = computed(() => {
     );
     return [{code: NODE_TYPE_CODE.COMMENT, name: '注释'}, ...rest];
 });
+
+const addNodeSelectOptions = computed(() =>
+    addNodeMenuList.value.map(nt => ({
+        value: nt.code,
+        label: nt.name,
+    }))
+);
+
+const addNodeSelectValue = ref(undefined);
+
+function onAddNodeSelect(code) {
+    const nt = addNodeMenuList.value.find(item => item.code === code);
+    if (nt) addNode(nt);
+    nextTick(() => { addNodeSelectValue.value = undefined; });
+}
 /** 保存中状态 */
 const saving = ref(false);
 /** 右侧栏宽度（px），配置区与运行日志共用 */
@@ -433,9 +447,26 @@ function resolveNodeIdFromResult(data) {
  */
 function applyWorkflowResultToNodes(data) {
     const nodeId = resolveNodeIdFromResult(data);
-    if (!nodeId || !findNode(nodeId)) return;
+    const aimNode = findNode(nodeId);
+    if (!nodeId || !aimNode) return;
     if (typeof data.state !== 'number') return;
+    let clearSameLevelNodeState = false;
+    const parentId = aimNode.data.wnode.parent;
+    if (aimNode.data.wnode.type === NODE_TYPE_CODE.START && parentId !== ""){
+      clearSameLevelNodeState = true;
+    }
     setNodes(getNodes.value.map(n => {
+        if (clearSameLevelNodeState
+            && n.data.wnode.parent === parentId
+            && n.id !== nodeId){
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              runState: undefined
+            }
+          }
+        }
         if (n.id !== nodeId) return n;
         return {
             ...n,
@@ -1479,6 +1510,24 @@ function onConfigsChange(configs) {
     }
 }
 
+function onNodeNameChange(newName) {
+    if (!selectedNodeId.value) return;
+    setNodes(getNodes.value.map(n => {
+        if (n.id !== selectedNodeId.value) return n;
+        return {
+            ...n,
+            label: newName,
+            data: {
+                ...n.data,
+                wnode: {
+                    ...n.data?.wnode,
+                    name: newName,
+                },
+            },
+        };
+    }));
+}
+
 // ─── 布局切换 ─────────────────────────────────────────────────────────────────
 
 function applyLayout(direction) {
@@ -1621,24 +1670,20 @@ watch(() => props.uuid, (newUuid) => {
       </div>
 
       <div class="toolbar-actions">
-        <!-- 添加节点下拉菜单 -->
-        <Dropdown :trigger="['click']">
-          <Button type="primary" size="small">
-            <PlusOutlined />
-            添加节点
-          </Button>
-          <template #overlay>
-            <Menu>
-              <Menu.Item
-                v-for="nt in addNodeMenuList"
-                :key="`${nt.code}-${nt.name}`"
-                @click="addNode(nt)"
-              >
-                {{ nt.name }}
-              </Menu.Item>
-            </Menu>
-          </template>
-        </Dropdown>
+        <!-- 添加节点下拉（虚拟列表，最多显示 10 项） -->
+        <Select
+          v-model:value="addNodeSelectValue"
+          placeholder="添加节点"
+          size="small"
+          :options="addNodeSelectOptions"
+          :virtual="true"
+          :list-height="320"
+          :show-search="true"
+          option-filter-prop="label"
+          :dropdown-match-select-width="false"
+          @change="onAddNodeSelect"
+          class="add-node-select"
+        />
 
         <Divider type="vertical" />
 
@@ -1763,6 +1808,7 @@ watch(() => props.uuid, (newUuid) => {
               :pool="selectedNodePool"
               :request-pool-refresh="refreshSelectedNodePool"
               @configs-change="onConfigsChange"
+              @node-name-change="onNodeNameChange"
             />
           </div>
         </div>
@@ -2027,5 +2073,35 @@ watch(() => props.uuid, (newUuid) => {
 .run-log-empty {
   color: #8c8c8c;
   padding: 16px 0;
+}
+
+/* ── 添加节点下拉 Select ── */
+.add-node-select {
+  min-width: 100px;
+}
+.add-node-select :deep(.ant-select-selector) {
+  border-color: #1677ff !important;
+  background: #1677ff !important;
+  color: #fff !important;
+  border-radius: 4px;
+  height: 24px;
+  padding: 0 11px;
+}
+.add-node-select :deep(.ant-select-selection-placeholder) {
+  color: #fff !important;
+  line-height: 22px;
+  font-size: 13px;
+}
+.add-node-select :deep(.ant-select-arrow) {
+  color: #fff;
+}
+.add-node-select :deep(.ant-select-selection-item) {
+  color: #fff !important;
+  line-height: 22px;
+  font-size: 13px;
+}
+.add-node-select:hover :deep(.ant-select-selector) {
+  background: #4096ff !important;
+  border-color: #4096ff !important;
 }
 </style>
