@@ -96,6 +96,11 @@ public class NodeImpl implements Node {
         configs.put(config.getName(), list);
     }
 
+    private void parseQueue(Config config){
+        LinkedList<String> queue = new LinkedList<>(JSON.parseArray(config.getValue(), String.class));
+        configs.put(config.getName(), queue);
+    }
+
     private void parseCondition(Config config){
         ConditionConfig conditionConfig = JSON.parseObject(config.getValue(), ConditionConfig.class);
         configs.put(config.getName(), conditionConfig);
@@ -126,6 +131,9 @@ public class NodeImpl implements Node {
                     break;
                 case ConfigTypes.LIST:
                     parseList(config);
+                    break;
+                case ConfigTypes.QUEUE:
+                    parseQueue(config);
                     break;
                 case ConfigTypes.CONDITION:
                     parseCondition(config);

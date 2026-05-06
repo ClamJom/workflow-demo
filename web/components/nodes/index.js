@@ -44,10 +44,28 @@ export const NODE_TYPE_CODE = {
     HELLO: 0x0000003,
     CONDITION: 0x0000004,
     HTTP: 0x000005,
+    SLEEP: 0x000006,
     LOOP: 0x0000007 | NESTABLE_FLAG,
     WHILE_LOOP: 0x0000008 | NESTABLE_FLAG,
     BREAK: 0x0000009,
     VARIABLE_ASSIGN: 0x000000A,
+    UNARY_OPERATORS: 0x000000B,
+    BINARY_OPERATORS: 0x000000C,
+    LIST_INDEX_GET: 0x000000D,
+    LIST_INDEX_SET: 0x000000E,
+    LIST_INDEX_REMOVE: 0x000000F,
+    LIST_ADD: 0x000010,
+    LIST_SIZE: 0x000011,
+    LIST_CLEAR: 0x000012,
+    MAP_GET: 0x000013,
+    MAP_PUT: 0x000014,
+    MAP_REMOVE: 0x000015,
+    MAP_CONTAINS: 0x000016,
+    QUEUE_PEEK: 0x000017,
+    QUEUE_PUSH: 0x000018,
+    QUEUE_POP: 0x000019,
+    QUEUE_SIZE: 0x00001A,
+    QUEUE_CLEAR: 0x00001B,
 };
 
 /**
@@ -66,6 +84,16 @@ export function isNestableNodeType(code) {
  */
 export function isCommentNodeType(code) {
     return code === NODE_TYPE_CODE.COMMENT;
+}
+
+/**
+ * 前端展示名映射。后端 HELLO 节点实际用于输出消息，界面展示为「输出」。
+ * @param {{code?: number, name?: string}} nodeType
+ * @returns {string}
+ */
+export function getNodeDisplayName(nodeType) {
+    if (nodeType?.code === NODE_TYPE_CODE.HELLO) return '输出';
+    return nodeType?.name || '';
 }
 
 /**
