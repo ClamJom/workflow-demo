@@ -1,5 +1,6 @@
 package com.example.demoworkflow.control;
 
+import com.alibaba.fastjson2.JSON;
 import com.example.demoworkflow.mapper.CFileMapper;
 import com.example.demoworkflow.pojo.CFile;
 import com.example.demoworkflow.services.CFileServiceImpl;
@@ -16,12 +17,24 @@ import com.example.demoworkflow.vo.NodeTypeVO;
 import com.example.demoworkflow.vo.WorkflowVO;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v3")
 public class WorkflowController {
@@ -111,5 +124,34 @@ public class WorkflowController {
     public void deleteWorkflow(@RequestParam String uuid) {
         cFileService.deleteCFile("workflow", uuid);
         workflowFS.deleteWorkflow(uuid);
+    }
+
+    @Operation(description = "上传工作流")
+    @RequestMapping(path="/workflow/upload", method=RequestMethod.POST)
+    public String uploadWorkflow(@RequestBody MultipartFile file) {
+        try {
+            InputStream fis = file.getInputStream();
+            byte[] bytes = fis.readAllBytes();
+            WorkflowVO workflowVO = JSON.parseObject(bytes, WorkflowVO.class);
+            workflowFS.saveWorkflow(workflowVO);
+        }catch(Exception e){
+            log.error("Upload file error", e);
+            return "{\"state\":\"error\",\"msg\":\""+e.getMessage()+"\"}";
+        }
+        return "{\"state\":\"ok\",\"msg\":\"\"}";
+    }
+
+    @Operation(description = "下载工作流")
+    @RequestMapping(path="/workflow/download", method=RequestMethod.GET)
+    public void downloadWorkflow(@RequestParam String uuid, HttpServletResponse response) throws IOException {
+        CFile cFile = cFileService.getCFileByWorkspaceAndUuid("workflow", uuid);
+        Path path = workflowFS.pathFactory(cFile.getUuid());
+        File file = new File(path.toUri());
+        FileInputStream fis = new FileInputStream(file);
+        response.setHeader("content-disposition","attachment;fileName="+ URLEncoder.encode(uuid, StandardCharsets.UTF_8));
+        response.setHeader("Content-Length", String.valueOf(file.length()));
+        response.setContentType("application/json");
+        FileCopyUtils.copy(fis, response.getOutputStream());
+        fis.close();
     }
 }

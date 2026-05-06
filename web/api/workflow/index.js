@@ -64,6 +64,21 @@ export function deleteWorkflow(uuid){
     });
 }
 
+export function uploadWorkflow(file){
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post("/workflow/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+}
+
+export function downloadWorkflow(uuid){
+    return api.get("/workflow/download", {
+        params: { uuid },
+        responseType: "blob",
+    });
+}
+
 export default {
     getNodeTypes,
     getNodeConfigs,
@@ -74,4 +89,6 @@ export default {
     getWorkflows,
     updateWorkflow,
     deleteWorkflow,
+    uploadWorkflow,
+    downloadWorkflow,
 }

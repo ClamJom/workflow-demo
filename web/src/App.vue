@@ -16,6 +16,8 @@ import {
     FileTextOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined,
+    UploadOutlined,
+    DownloadOutlined,
 } from "@ant-design/icons-vue";
 import {onMounted, ref} from "vue";
 import api from "../api";
@@ -36,6 +38,56 @@ const creating = ref(false);
 
 /** 左侧边栏折叠状态 */
 const siderCollapsed = ref(false);
+
+const fileInputRef = ref(null);
+const uploading = ref(false);
+
+async function handleUploadWorkflow() {
+    fileInputRef.value?.click();
+}
+
+async function onFileSelected(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    uploading.value = true;
+    try {
+        const res = await workflowApis.uploadWorkflow(file);
+        const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+        if (data?.state === 'ok') {
+            message.success('工作流导入成功');
+            await getAllWorkflows();
+        } else {
+            message.error(data?.msg || '导入失败');
+        }
+    } catch (err) {
+        message.error(`导入失败：${err?.message || '未知错误'}`);
+    } finally {
+        uploading.value = false;
+        e.target.value = '';
+    }
+}
+
+async function handleDownloadWorkflow(uuid) {
+    if (!uuid) {
+        message.warning('请先选择一个工作流');
+        return;
+    }
+    try {
+        const res = await workflowApis.downloadWorkflow(uuid);
+        const blob = new Blob([res.data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${uuid}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        message.success('工作流已导出');
+    } catch (err) {
+        message.error(`导出失败：${err?.message || '未知错误'}`);
+    }
+}
 
 /**
  * 子组件保存工作流成功后刷新左侧列表名称
@@ -158,18 +210,40 @@ onMounted(() => {
       <template #default>
         <div class="sider-header">
           <span class="sider-title">工作流</span>
-          <Tooltip title="新建工作流">
-            <Button
-              type="primary"
-              size="small"
-              shape="circle"
-              :loading="creating"
-              @click="handleNewWorkflow"
-            >
-              <template #icon><PlusOutlined /></template>
-            </Button>
-          </Tooltip>
+          <div class="sider-header-actions">
+            <Tooltip title="导入工作流">
+              <Button
+                type="primary"
+                size="small"
+                shape="circle"
+                ghost
+                :loading="uploading"
+                @click="handleUploadWorkflow"
+              >
+                <template #icon><UploadOutlined /></template>
+              </Button>
+            </Tooltip>
+            <Tooltip title="新建工作流">
+              <Button
+                type="primary"
+                size="small"
+                shape="circle"
+                :loading="creating"
+                @click="handleNewWorkflow"
+              >
+                <template #icon><PlusOutlined /></template>
+              </Button>
+            </Tooltip>
+          </div>
         </div>
+
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept=".json"
+          style="display: none"
+          @change="onFileSelected"
+        />
 
         <div class="sider-body">
           <Spin :spinning="listLoading">
@@ -194,6 +268,14 @@ onMounted(() => {
                 <span class="item-name" :title="workflow.name || '未命名工作流'">
                   {{ workflow.name || '未命名工作流' }}
                 </span>
+                <Button
+                  type="text"
+                  size="small"
+                  class="item-action-btn"
+                  @click.stop="handleDownloadWorkflow(workflow.uuid)"
+                >
+                  <template #icon><DownloadOutlined /></template>
+                </Button>
                 <Popconfirm
                   title="确认删除该工作流？"
                   ok-text="删除"
@@ -205,7 +287,7 @@ onMounted(() => {
                     type="text"
                     size="small"
                     danger
-                    class="delete-btn"
+                    class="item-action-btn"
                     @click.stop
                   >
                     <template #icon><DeleteOutlined /></template>
@@ -283,6 +365,16 @@ onMounted(() => {
   color: #262626;
 }
 
+.sider-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sider-header-actions *:not(:last-child){
+  margin-right: 5px;
+}
+
 .sider-body {
   flex: 1;
   overflow-y: auto;
@@ -338,13 +430,13 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.delete-btn {
+.item-action-btn {
   flex-shrink: 0;
   opacity: 0;
   transition: opacity 0.15s;
 }
 
-.workflow-item:hover .delete-btn {
+.workflow-item:hover .item-action-btn {
   opacity: 1;
 }
 
