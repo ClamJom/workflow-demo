@@ -146,6 +146,7 @@ public class Workflow {
             String fromP = nodeMap.get(edge.from).parentNodeId;
             String toP = nodeMap.get(edge.to).parentNodeId;
             fromP = fromP == null ? "" : fromP;
+            toP = toP == null ? "" : toP;
             if (!fromP.equals(toP)) {
                 putInvalidMessage(workflow, "不允许跨层连接节点");
                 return workflow;
