@@ -47,8 +47,6 @@ function onResizeEnd(ev) {
       class="loop-node-resizer"
       :min-width="280"
       :min-height="200"
-      :max-width="2400"
-      :max-height="1600"
       @resize-end="onResizeEnd"
     />
     <div class="loop-shell" :class="uiStateClass">

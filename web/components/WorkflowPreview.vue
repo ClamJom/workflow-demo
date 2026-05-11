@@ -36,7 +36,7 @@ import {
     isCommentNodeType,
 } from './nodes/index.js';
 import NodeConfigPanel from './NodeConfigPanel.vue';
-import {autoLayoutVueFlowNested, NODE_WIDTH, NODE_HEIGHT} from '../utils/layout.js';
+import {NODE_WIDTH, NODE_HEIGHT, autoLayoutRef} from '../utils/layout.js';
 import api from '../api/index.js';
 import {generateUUID} from '../utils/token.js';
 
@@ -77,6 +77,7 @@ const {
     getSelectedNodes,
     getSelectedEdges,
     fitView,
+    screenToFlowCoordinate,
 } = useVueFlow();
 
 // ─── 状态 ─────────────────────────────────────────────────────────────────────
@@ -345,7 +346,7 @@ function castToVueFlow(workflowVO, direction) {
 
     // 若需要自动布局，则计算位置（含嵌套子图）
     if (needLayout) {
-        vfNodes = autoLayoutVueFlowNested(vfNodes, vfEdges, direction);
+        vfNodes = autoLayoutRef(vfNodes, vfEdges, direction);
     }
 
     vfNodes = sortVueFlowNodesParentFirst(vfNodes);
@@ -1064,6 +1065,19 @@ function getEnclosingLoopParentIdForBreak() {
  * 添加新节点
  * @param {Object} nodeType - 节点类型对象 { code, name, type }
  */
+/**
+ * 获取当前视图中心点在 Flow 坐标系中的位置
+ */
+function getViewportCenter() {
+    const el = document.querySelector('.flow-canvas');
+    if (!el) return {x: 100, y: 100};
+    const rect = el.getBoundingClientRect();
+    return screenToFlowCoordinate({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+    });
+}
+
 function addNode(nodeType) {
     const code = nodeType.code;
     let nestParentId = getNestableParentIdForAdd();
@@ -1085,8 +1099,9 @@ function addNode(nodeType) {
         const loopId = generateUUID();
         const subStartId = generateUUID();
         const subEndId = generateUUID();
-        const baseX = 100 + Math.random() * 200;
-        const baseY = 100 + Math.random() * 200;
+        const center = getViewportCenter();
+        const baseX = center.x;
+        const baseY = center.y;
         addNodes([
             {
                 id: loopId,
@@ -1192,10 +1207,7 @@ function addNode(nodeType) {
     }
 
     const nodeId = generateUUID();
-    let position = {
-        x: 100 + Math.random() * 200,
-        y: 100 + Math.random() * 200,
-    };
+    let position;
     let parentNode;
 
     if (nestParentId) {
@@ -1203,6 +1215,8 @@ function addNode(nodeType) {
         const siblings = getNodes.value.filter(n => n.parentNode === nestParentId);
         const idx = siblings.length;
         position = {x: 120 + idx * 36, y: 100};
+    } else {
+        position = getViewportCenter();
     }
 
     const newNode = {
@@ -1551,7 +1565,7 @@ function applyLayout(direction) {
     layoutDirection.value = direction;
     const currentNodes = getNodes.value;
     const currentEdges = getEdges.value;
-    const laid = autoLayoutVueFlowNested(currentNodes, currentEdges, direction);
+    const laid = autoLayoutRef(currentNodes, currentEdges, direction);
     setNodes(sortVueFlowNodesParentFirst(laid));
     nextTick(() => fitView({padding: 0.2}));
 }
