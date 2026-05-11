@@ -17,8 +17,7 @@ export function autoLayoutRef(vfNodes, vfEdges, direction = 'horizontal'){
     parentIdMap.keys().forEach(item => nestableNodes.push(item));
     const byId = new Map(vfNodes.map(n => [n.id, n]));
     function getParentDepth(pid){
-        if (pid === "") return -1;
-        let d = 0;
+        let d = 1;
         let cur = byId.get(pid);
         while (cur?.parentNode) {
             d++;

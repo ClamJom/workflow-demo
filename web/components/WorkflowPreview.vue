@@ -1477,15 +1477,15 @@ onConnect((params) => {
         message.warning('注释节点不允许连线');
         return;
     }
+    const sp = srcNode.parentNode || '';
+    const tp = tgtNode.parentNode || '';
+    if (sp !== tp){
+      message.warning("不允许跨层连接节点");
+      return;
+    }
     if (st === NODE_TYPE_CODE.BREAK) {
         if (tt !== NODE_TYPE_CODE.END) {
             message.warning('跳出节点的出边只能连接至结束节点');
-            return;
-        }
-        const sp = srcNode.parentNode || '';
-        const tp = tgtNode.parentNode || '';
-        if (sp !== tp) {
-            message.warning('跳出节点只能连接至同一循环容器内的结束节点');
             return;
         }
     }

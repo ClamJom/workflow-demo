@@ -143,6 +143,13 @@ public class Workflow {
             return workflow;
         }
         for(EdgeVO edge: vo.edges) {
+            String fromP = nodeMap.get(edge.from).parentNodeId;
+            String toP = nodeMap.get(edge.to).parentNodeId;
+            fromP = fromP == null ? "" : fromP;
+            if (!fromP.equals(toP)) {
+                putInvalidMessage(workflow, "不允许跨层连接节点");
+                return workflow;
+            }
             nodeMap.get(edge.to).relatedNodes.add(edge.from);
             nodeMap.get(edge.from).nextNodes.add(nodeMap.get(edge.to));
             inDegree.computeIfAbsent(edge.to, k -> 1);
