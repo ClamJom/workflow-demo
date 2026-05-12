@@ -1078,8 +1078,31 @@ function getViewportCenter() {
     });
 }
 
-function addNode(nodeType) {
+async function getNodeDefaultConfigs(nodeCode){
+  const res = await api.workflow.getNodeConfigs(nodeCode);
+  const configList = Array.isArray(res.data) ? res.data : [];
+  return configList.map((c, idx) => {
+    return {
+      id: typeof c.id === 'number' ? c.id : idx + 1,
+      name: c.name,
+      des: c.des ?? c.name ?? '',
+      type: c.type,
+      value: c.value ?? '',
+      options: c.options,
+      min: c.min,
+      max: c.max,
+      k: c.k ?? 1,
+      quantize: c.quantize ?? 0,
+      required: c.required ?? false,
+      parent: c.parent ?? 0,
+      _rowKey: generateUUID()
+    }
+  });
+}
+
+async function addNode(nodeType) {
     const code = nodeType.code;
+    const defaultConfigs = await getNodeDefaultConfigs(code);
     let nestParentId = getNestableParentIdForAdd();
 
     const hasRootStart = getNodes.value.some(n =>
@@ -1113,7 +1136,7 @@ function addNode(nodeType) {
                         id: loopId,
                         name: nodeType.name,
                         type: code,
-                        configs: [],
+                        configs: defaultConfigs,
                     },
                     outputs: [],
                 },
@@ -1229,7 +1252,7 @@ function addNode(nodeType) {
                 id: nodeId,
                 name: nodeType.name,
                 type: code,
-                configs: [],
+                configs: defaultConfigs,
             },
             outputs: [],
         },

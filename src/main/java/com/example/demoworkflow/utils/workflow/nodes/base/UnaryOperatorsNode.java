@@ -33,6 +33,7 @@ public class UnaryOperatorsNode extends NodeImpl {
         configs.add(ConfigVO.builder()
                         .name("var")
                         .des("值或变量")
+                        .value("0")
                         .k(1)
                         .quantize(0)
                         .type(ConfigTypes.NUMBER)

@@ -300,7 +300,6 @@ function initConfigValues() {
   Object.keys(configValues).forEach((k) => {
     if (!names.has(k)) delete configValues[k];
   });
-
   const initialMap = {};
   if (props.initialConfigs && props.initialConfigs.length > 0) {
     props.initialConfigs.forEach((item) => {
